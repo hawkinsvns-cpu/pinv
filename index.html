@@ -108,7 +108,7 @@
         td { padding: 12px; border-bottom: 1px solid var(--border-color); }
 
         /* ================= INVOICE PRINT LAYOUT (STRICT A4 1-PAGE) ================= */
-        #invoice-preview { display: none; width: 100%; max-width: 190mm; background: #fff; color: #000; border: 1px solid #000; padding: 12px; box-sizing: border-box; margin: 10px auto; font-family: Arial, sans-serif; position: relative; min-height: 270mm; }
+        #invoice-preview { display: none; width: 100%; max-width: 190mm; background: #fff; color: #000; border: 1px solid #000; padding: 12px; box-sizing: border-box; margin: 10px auto; font-family: Arial, sans-serif; position: relative; min-height: 275mm; }
         .dc-top-badge { text-align: center; font-size: 16px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; border-bottom: 2px solid #000; padding-bottom: 2px; }
         .brand-header-table { width: 100%; border: none; margin-bottom: 8px; }
         .brand-header-table td { border: none; padding: 0; vertical-align: top; }
@@ -130,17 +130,17 @@
         .text-right { text-align: right; } .text-center { text-align: center; }
         .legal-footer { margin-top: 8px; font-size: 9.5px; border-left: 3px solid #000; padding-left: 6px; font-style: italic; line-height: 1.2; }
         
-        /* Centered Warning Badge */
-        .middle-warning-zone { text-align: center; margin: 25px 0 10px 0; width: 100%; }
-        .commercial-warning-text { font-size: 15px; font-weight: bold; font-style: italic; letter-spacing: 1px; text-transform: uppercase; display: inline-block; border: 1px double #000; padding: 4px 15px; }
-
         .sign-row { display: flex; justify-content: flex-end; margin-top: 15px; font-size: 11px; }
         .sig-box { width: 220px; border-top: 1px solid #000; text-align: center; padding-top: 4px; font-weight: bold; }
         
-        /* BOTTOM ABSOLUTE FOOTER STYLES */
-        .mumbai-absolute-footer { position: absolute; bottom: 10px; left: 12px; right: 12px; border-top: 2px double #000; padding-top: 6px; }
+        /* FIXED MAXIMUM BOTTOM ALIGNMENT STRUCTURAL CONTAINERS */
+        .bottom-fixed-sticky-zone { position: absolute; bottom: 10px; left: 12px; right: 12px; display: flex; flex-direction: column; gap: 12px; }
+        .middle-warning-zone { text-align: center; width: 100%; margin: 0 auto; }
+        .commercial-warning-text { font-size: 14px; font-weight: bold; font-style: italic; letter-spacing: 1px; text-transform: uppercase; display: inline-block; border: 1px double #000; padding: 5px 20px; background: #fff !important; }
+
+        .mumbai-absolute-footer { border-top: 2px double #000; padding-top: 6px; }
         .mumbai-footer-table { width: 100%; border-collapse: collapse; }
-        .mumbai-footer-table td { border: 1px solid #000; padding: 4px; font-size: 9px; text-align: left; vertical-align: top; background: #fafafa !important; }
+        .mumbai-footer-table td { border: 1px solid #000; padding: 5px; font-size: 9px; text-align: left; vertical-align: top; background: #fafafa !important; }
         .corporate-tag { text-align: center; font-size: 8.5px; font-weight: bold; letter-spacing: 1px; margin-top: 4px; text-transform: uppercase; }
 
         @media print {
@@ -156,7 +156,7 @@
 <div class="container">
     <div class="header-title"><span>📦</span> Hawkins Damage Stock Pro System (v13.0)</div>
 
-    <!-- NEW OPTIONAL & DYNAMIC GOOGLE DRIVE MANAGER BOX -->
+    <!-- GOOGLE DRIVE MANAGER BOX -->
     <div class="cloud-settings-zone">
         <div style="display: flex; gap: 15px; align-items: center; flex-grow: 1;">
             <label style="font-weight: bold; font-size: 13px; color: #495057;">☁️ Google Client ID (Optional):</label>
@@ -303,97 +303,100 @@
 
 <!-- ================= BRANDED PRINT LAYOUT (1-PAGE FIXED) ================= -->
 <div id="invoice-preview">
-    <div class="dc-top-badge">Delivery Challan[cite: 1]</div>
-    <table class="brand-header-table">[cite: 1]
+    <div class="dc-top-badge">Delivery Challan</div>
+    <table class="brand-header-table">
         <tr>
             <td style="width:65px;">
-                <div class="logo-circle"><div class="logo-stripe">Hawkins</div></div>[cite: 1]
+                <div class="logo-circle"><div class="logo-stripe">Hawkins</div></div>
             </td>
             <td style="padding-left:12px;">
-                <div class="comp-title">HAWKINS COOKERS LIMITED</div>[cite: 1]
-                <div class="comp-subtitle">C & FA : NORTHERN GOODS CARRIERS</div>[cite: 1]
+                <div class="comp-title">HAWKINS COOKERS LIMITED</div>
+                <div class="comp-subtitle">C & FA : NORTHERN GOODS CARRIERS</div>
                 <div class="comp-desc">
-                    HARIHARPUR, ROHANIYA DLW ROAD ( Near Omkar Upwan ), VARANASI - 221108<br>[cite: 1]
-                    <strong>MOB:</strong> 8840390116 | <strong>GSTIN:</strong> 09AAACH1784M1Z7[cite: 1]
+                    HARIHARPUR, ROHANIYA DLW ROAD ( Near Omkar Upwan ), VARANASI - 221108<br>
+                    <strong>MOB:</strong> 8840390116 | <strong>GSTIN:</strong> 09AAACH1784M1Z7
                 </div>
             </td>
         </tr>
     </table>
 
-    <div class="split-box">[cite: 1]
+    <div class="split-box">
         <div class="pane-left">
-            <strong>To,</strong><br>[cite: 1]
-            <strong>Hawkins Cookers Limited.</strong><br>[cite: 1]
-            Plot No A-1, A-2, A-14, A-15 UPSIDC INDUSTRIAL AREA<br>[cite: 1]
-            SATHARIYA - JAUNPUR<br>[cite: 1]
-            <strong>GSTIN:</strong> 09AAACH1784M1Z7[cite: 1]
+            <strong>To,</strong><br>
+            <strong>Hawkins Cookers Limited.</strong><br>
+            Plot No A-1, A-2, A-14, A-15 UPSIDC INDUSTRIAL AREA<br>
+            SATHARIYA - JAUNPUR<br>
+            <strong>GSTIN:</strong> 09AAACH1784M1Z7
         </div>
         <div class="pane-right">
-            <strong>Delivery Challan No:</strong> <span id="pChallanNo" style="font-weight:bold;"></span><br>[cite: 1]
-            <strong>Delivery Challan Dt:</strong> <span id="pChallanDate"></span><br>[cite: 1]
-            <strong>LR NO :</strong> <span id="pLrNo"></span><br>[cite: 1]
-            <strong>TPT :</strong> <span id="pTransport"></span>[cite: 1]
+            <strong>Delivery Challan No:</strong> <span id="pChallanNo" style="font-weight:bold;"></span><br>
+            <strong>Delivery Challan Dt:</strong> <span id="pChallanDate"></span><br>
+            <strong>LR NO :</strong> <span id="pLrNo"></span><br>
+            <strong>TPT :</strong> <span id="pTransport"></span>
         </div>
     </div>
 
-    <div class="ribbon-bar">[cite: 1]
-        <div>📋 <strong>SPECIFICATION:</strong> Unsalable Cookers/Cookwares Damaged Stock Returns</div>[cite: 1]
-        <div>🏭 <strong>DEALER:</strong> <span id="pDealerName" style="font-weight:bold; text-decoration:underline;"></span></div>[cite: 1]
-        <div>📍 <strong>TOWN/CITY:</strong> <span id="pDealerTown" style="font-weight:bold; text-decoration:underline;"></span></div>[cite: 1]
+    <div class="ribbon-bar">
+        <div>📋 <strong>SPECIFICATION:</strong> Unsalable Cookers/Cookwares Damaged Stock Returns</div>
+        <div>🏭 <strong>DEALER:</strong> <span id="pDealerName" style="font-weight:bold; text-decoration:underline;"></span></div>
+        <div>📍 <strong>TOWN/CITY:</strong> <span id="pDealerTown" style="font-weight:bold; text-decoration:underline;"></span></div>
     </div>
 
-    <table class="main-print-table">[cite: 1]
+    <table class="main-print-table">
         <thead>
             <tr>
-                <th style="width:5%;">Sr</th>[cite: 1]
-                <th style="width:18%;">Serial Number</th>[cite: 1]
-                <th style="width:12%;">Code</th>[cite: 1]
-                <th style="width:35%;">Product Name / Description</th>[cite: 1]
-                <th style="width:6%;">Qty</th>[cite: 1]
-                <th style="width:10%;">Base MRP</th>[cite: 1]
-                <th style="width:14%;">Taxable Value</th>[cite: 1]
-                <th style="width:12%;">Complaint No</th>[cite: 1]
+                <th style="width:5%;">Sr</th>
+                <th style="width:18%;">Serial Number</th>
+                <th style="width:12%;">Code</th>
+                <th style="width:35%;">Product Name / Description</th>
+                <th style="width:6%;">Qty</th>
+                <th style="width:10%;">Base MRP</th>
+                <th style="width:14%;">Taxable Value</th>
+                <th style="width:12%;">Complaint No</th>
             </tr>
         </thead>
         <tbody id="pTableBody"></tbody>
         <tfoot>
             <tr style="font-weight:bold; background:#eee;">
-                <td colspan="4" class="text-right">TOTAL SUMMARY</td>[cite: 1]
-                <td id="pTotalQty" class="text-center">0</td>[cite: 1]
+                <td colspan="4" class="text-right">TOTAL SUMMARY</td>
+                <td id="pTotalQty" class="text-center">0</td>
                 <td></td>
-                <td id="pTotalValue" class="text-right">₹0.00</td>[cite: 1]
+                <td id="pTotalValue" class="text-right">₹0.00</td>
                 <td></td>
             </tr>
         </tfoot>
     </table>
 
-    <div id="pAmountWords" style="margin-top:8px; font-size:10.5px; font-weight:bold;"></div>[cite: 1]
-    <div class="legal-footer">We certify that these goods are manufacturing defects/damaged stock items being returned to factories. They are unsalable and hold zero commercial values.</div>[cite: 1]
-
-    <!-- Dynamic Warning Badge Centered -->
-    <div class="middle-warning-zone">
-        <div class="commercial-warning-text">No Commercial Value - Not For Sale</div>[cite: 1]
-    </div>
+    <div id="pAmountWords" style="margin-top:8px; font-size:10.5px; font-weight:bold;"></div>
+    <div class="legal-footer">We certify that these goods are manufacturing defects/damaged stock items being returned to factories. They are unsalable and hold zero commercial values.</div>
 
     <div class="sign-row">
-        <div class="sig-box">For HAWKINS COOKERS LIMITED<br><br><br>Authorized Signatory</div>[cite: 1]
+        <div class="sig-box">For HAWKINS COOKERS LIMITED<br><br><br>Authorized Signatory</div>
     </div>
 
-    <!-- ABSOLUTE FOOTER -->
-    <div class="mumbai-absolute-footer">
-        <table class="mumbai-footer-table">
-            <tr>
-                <td style="width: 50%;">
-                    <strong>✨ Marketing Office:</strong><br>[cite: 1]
-                    New Udyog Mandir II, Pitambar Lane, Mahim, Mumbai-400 016. Tel.:022 2444 0807, Fax: 022 2444 9152[cite: 1]
-                </td>
-                <td style="width: 50%;">
-                    <strong>🏢 Registered Office:</strong><br>[cite: 1]
-                    Maker Tower F 101, Cuffe Parade, Mumbai - 400 005[cite: 1]
-                </td>
-            </tr>
-        </table>
-        <div class="corporate-tag">Corporate Id. No.: L28997MH1959PLC011304</div>[cite: 1]
+    <!-- NEW FIXED MAXIMUM BOTTOM POSITION STRUCTURAL CONTROL PACKET -->
+    <div class="bottom-fixed-sticky-zone">
+        <!-- "No Commercial Value - Not For Sale" text box properly centered right above the footer -->
+        <div class="middle-warning-zone">
+            <div class="commercial-warning-text">No Commercial Value - Not For Sale</div>
+        </div>
+        
+        <!-- Grey Box Absolute Footer Structure -->
+        <div class="mumbai-absolute-footer">
+            <table class="mumbai-footer-table">
+                <tr>
+                    <td style="width: 50%;">
+                        <strong>✨ Marketing Office:</strong><br>
+                        New Udyog Mandir II, Pitambar Lane, Mahim, Mumbai-400 016. Tel.:022 2444 0807, Fax: 022 2444 9152
+                    </td>
+                    <td style="width: 50%;">
+                        <strong>🏢 Registered Office:</strong><br>
+                        Maker Tower F 101, Cuffe Parade, Mumbai - 400 005
+                    </td>
+                </tr>
+            </table>
+            <div class="corporate-tag">Corporate Id. No.: L28997MH1959PLC011304</div>
+        </div>
     </div>
 </div>
 
@@ -570,157 +573,92 @@
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
 
-    function exportSingleChallanExcel(packet) {
-        const matrix = [
-            ["HAWKINS COOKERS LIMITED - DELIVERY CHALLAN REPORT"], [ ],
-            ["Challan No:", packet.chNo, "", "Challan Date:", formatCustomDate(packet.date)],
-            ["Dealer Name:", packet.dealer, "", "Town/City:", packet.town || "N/A"],
-            ["LR No:", packet.lr || "N/A", "", "Transport Route:", packet.transport], [ ],
-            ["Sr", "Serial Number", "Code", "Product Name / Description", "Qty", "Base MRP", "Taxable Value", "Complaint No"]
-        ];
-
-        let totalQty = 0; let totalTax = 0;
-        packet.items.forEach(i => {
-            totalQty += parseInt(i.qty); totalTax += parseFloat(i.taxable);
-            matrix.push([i.sr, i.serial, i.code, i.desc, i.qty, parseFloat(i.rate).toFixed(2), parseFloat(i.taxable).toFixed(2), i.complaint]);
-        });
-
-        matrix.push(["", "", "", "TOTAL SUMMARY", totalQty, "", Math.round(totalTax).toFixed(2), ""]);
-
-        const ws = XLSX.utils.aoa_to_sheet(matrix);
-        const wb = XLSX.utils.book_new();
-        ws['!cols'] = [{wch:6},{wch:18},{wch:12},{wch:30},{wch:8},{wch:12},{wch:15},{wch:15}];
-        XLSX.utils.book_append_sheet(wb, ws, "Challan Summary");
-        
-        XLSX.writeFile(wb, `Challan_${packet.chNo}_${packet.dealer.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`);
-
-        // Dynamic Google Drive Upload Engine
-        if (accessToken) { uploadToGoogleDrive(wb, `Challan_${packet.chNo}.xlsx`); }
-    }
-
-    function uploadToGoogleDrive(workbook, filename) {
-        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
-        function s2ab(s) { const buf = new ArrayBuffer(s.length); const view = new Uint8Array(buf); for (let i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF; return buf; }
-        const blob = new Blob([s2ab(wbout)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-        const metadata = { 'name': filename, 'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
-        const formData = new FormData();
-        formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        formData.append('file', blob);
-
-        fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-            method: 'POST',
-            headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
-            body: formData
-        }).then(response => response.json())
-        .then(data => alert(`✨ File Synced With Linked Drive Cloud Successfully!`))
-        .catch(err => console.error('Drive Cloud Upload Error:', err));
-    }
-
-    function runLivePrintInvoiceEngine(packet) {
-        document.getElementById('pChallanNo').innerText = packet.chNo;
-        document.getElementById('pChallanDate').innerText = formatCustomDate(packet.date);
-        document.getElementById('pLrNo').innerText = packet.lr || "N/A";
-        document.getElementById('pTransport').innerText = packet.transport;
-        document.getElementById('pDealerName').innerText = packet.dealer;
-        document.getElementById('pDealerTown').innerText = packet.town || "N/A";
-
-        const pBody = document.getElementById('pTableBody'); pBody.innerHTML = "";
-        let tQty = 0; let tVal = 0;
-
-        packet.items.forEach(i => {
-            tQty += i.qty; tVal += parseFloat(i.taxable);
-            pBody.innerHTML += `<tr><td class="text-center">${i.sr}</td><td>${i.serial}</td><td>${i.code}</td><td>${i.desc}</td><td class="text-center">${i.qty}</td><td class="text-right">${parseFloat(i.rate).toFixed(2)}</td><td class="text-right">${parseFloat(i.taxable).toFixed(2)}</td><td>${i.complaint}</td></tr>`;
-        });
-
-        const grossRounded = Math.round(tVal);
-        document.getElementById('pTotalQty').innerText = tQty;
-        document.getElementById('pTotalValue').innerText = "₹" + grossRounded.toFixed(2);
-        document.getElementById('pAmountWords').innerText = "Amount In Words: Rupees " + convertToWordsIndian(grossRounded) + " Only";
-
-        document.getElementById('invoice-preview').style.display = "block";
-        setTimeout(() => {
-            window.print();
-            document.getElementById('invoice-preview').style.display = "none";
-        }, 350);
-    }
-
     function validateAndSaveBill() {
-        const dealerName = document.getElementById('dealerTargetName').value;
-        const dealerTown = document.getElementById('dealerTargetTown').value;
-        const chNo = document.getElementById('challanNo').value;
+        const chNo = document.getElementById('challanNo').value.trim();
         const date = document.getElementById('challanDate').value;
+        const dName = document.getElementById('dealerTargetName').value;
+        const dTown = document.getElementById('dealerTargetTown').value;
         const transport = document.getElementById('transportDetails').value;
         const lr = document.getElementById('lrNo').value;
 
-        if (!dealerName || window.activeStockRows.length === 0) {
-            alert("Error: Active row empty or dealer verification required!");
+        if(!chNo || !date || !dName || window.activeStockRows.length === 0) {
+            alert("Please operationalize a dealer selection and add entries before printing!");
             return;
         }
 
-        const packet = { chNo, date, dealer: dealerName, town: dealerTown, transport, lr, items: window.activeStockRows };
+        document.getElementById('pChallanNo').innerText = chNo;
+        document.getElementById('pChallanDate').innerText = formatCustomDate(date);
+        document.getElementById('pLrNo').innerText = lr || "N/A";
+        document.getElementById('pTransport').innerText = transport;
+        document.getElementById('pDealerName').innerText = dName;
+        document.getElementById('pDealerTown').innerText = dTown;
+
+        const pt = document.getElementById('pTableBody'); pt.innerHTML = "";
+        let totQty = 0; let totVal = 0;
+        window.activeStockRows.forEach(r => {
+            totQty += r.qty; totVal += parseFloat(r.taxable);
+            pt.innerHTML += `<tr><td class="text-center">${r.sr}</td><td>${r.serial}</td><td><b>${r.code}</b></td><td>${r.desc}</td><td class="text-center">${r.qty}</td><td class="text-right">${r.rate}</td><td class="text-right">${parseFloat(r.taxable).toFixed(2)}</td><td>${r.complaint}</td></tr>`;
+        });
+        document.getElementById('pTotalQty').innerText = totQty;
+        document.getElementById('pTotalValue').innerText = "₹" + Math.round(totVal).toFixed(2);
         
-        window.savedDatabaseLogs = window.savedDatabaseLogs.filter(l => l.chNo !== chNo);
-        window.savedDatabaseLogs.push(packet);
+        // Convert total to words logic
+        document.getElementById('pAmountWords').innerText = "Amount In Words: Rupees " + convertNumberToWords(Math.round(totVal)) + " Only";
+
+        const logPacket = { chNo, date, dealer: dName, town: dTown, transport, lr, totalItems: totQty, totalAmt: Math.round(totVal), items: [...window.activeStockRows] };
+        
+        const existingIdx = window.savedDatabaseLogs.findIndex(l => l.chNo === chNo);
+        if(existingIdx >= 0) window.savedDatabaseLogs[existingIdx] = logPacket;
+        else window.savedDatabaseLogs.push(logPacket);
+
         localStorage.setItem('hwk_challan_logs', JSON.stringify(window.savedDatabaseLogs));
-
-        exportSingleChallanExcel(packet);
-        runLivePrintInvoiceEngine(packet);
+        renderHistoryLogs();
         
-        if(!isNaN(chNo)) { document.getElementById('challanNo').value = parseInt(chNo) + 1; }
-
+        // Trigger Standard Print Setup Context
+        window.print();
+        
+        // Post execution auto-increment logic
+        const nextNum = parseInt(chNo) + 1;
+        if(!isNaN(nextNum)) document.getElementById('challanNo').value = nextNum;
         window.activeStockRows = [];
         renderGridTable();
-        renderHistoryLogs();
-        document.getElementById('searchDealer').value = "";
-        document.getElementById('dealerTargetName').value = "";
-        document.getElementById('dealerTargetTown').value = "";
     }
 
     function renderHistoryLogs() {
-        const body = document.getElementById('historyLogBody'); body.innerHTML = "";
+        const hb = document.getElementById('historyLogBody'); hb.innerHTML = "";
         if(window.savedDatabaseLogs.length === 0) {
-            body.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#999;">No saved local history entries found in this session.</td></tr>`;
+            hb.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#999;">No saved local history entries found in this session.</td></tr>`;
             return;
         }
-        window.savedDatabaseLogs.forEach(l => {
-            body.innerHTML += `<tr><td><b>${l.chNo}</b></td><td>${formatCustomDate(l.date)}</td><td>${l.dealer}</td><td>${l.items.length} Items</td><td><button class="btn" style="padding:3px 8px; font-size:12px; background:#1e7e34;" onclick="reloadPrintFromLog('${l.chNo}')">Print PDF</button></td></tr>`;
+        window.savedDatabaseLogs.forEach((l, idx) => {
+            hb.innerHTML += `<tr><td><b>${l.chNo}</b></td><td>${formatCustomDate(l.date)}</td><td>${l.dealer}</td><td>${l.totalItems} Items (₹${l.totalAmt})</td><td><button class="btn" style="padding:4px 8px; font-size:12px; background:#495057;" onclick="reprintLogChallan(${idx})">Reprint</button></td></tr>`;
         });
     }
 
-    window.reloadPrintFromLog = function(chNo) {
-        const log = window.savedDatabaseLogs.find(l => l.chNo === chNo);
-        if(log) runLivePrintInvoiceEngine(log);
-    };
-
-    function convertToWordsIndian(num) {
-        if (num === 0) return 'Zero';
-        const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-        const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-        function g(n) { if (n < 20) return a[n]; let s = b[Math.floor(n / 10)]; if (n % 10 > 0) s += ' ' + a[n % 10]; return s; }
-        function c(n, v, r) { if (n === 0) return ''; return g(n) + ' ' + v + (r ? ' ' + r : ''); }
-        let out = ''; let numStr = num.toString().padStart(9, '0');
-        let crores = parseInt(numStr.substring(0, 2)); let lakhs = parseInt(numStr.substring(2, 4));
-        let thousands = parseInt(numStr.substring(4, 6)); let hundreds = parseInt(numStr.substring(6, 7));
-        let tensUnits = parseInt(numStr.substring(7, 9));
-        if (crores > 0) out += c(crores, 'Crore', out); if (lakhs > 0) out += (out ? ' ' : '') + c(lakhs, 'Lakh', out);
-        if (thousands > 0) out += (out ? ' ' : '') + c(thousands, 'Thousand', out); if (hundreds > 0) out += (out ? ' ' : '') + c(hundreds, 'Hundred', out);
-        if (tensUnits > 0) out += (out ? ' ' : '') + g(tensUnits);
-        return out.trim();
+    window.reprintLogChallan = function(idx) {
+        const packet = window.savedDatabaseLogs[idx];
+        document.getElementById('challanNo').value = packet.chNo;
+        document.getElementById('challanDate').value = packet.date;
+        document.getElementById('dealerTargetName').value = packet.dealer;
+        document.getElementById('dealerTargetTown').value = packet.town;
+        document.getElementById('transportDetails').value = packet.transport;
+        document.getElementById('lrNo').value = packet.lr;
+        window.activeStockRows = packet.items;
+        renderGridTable();
+        validateAndSaveBill();
     }
 
     function exportMasterReportToExcel() {
-        const rawLogs = localStorage.getItem('hwk_challan_logs');
-        const logs = rawLogs ? JSON.parse(rawLogs) : [];
-        if (logs.length === 0) { alert("Export Error: No records found!"); return; }
-        const matrix = [["HAWKINS COOKERS LIMITED - MASTER RECONCILIATION REPORT"], [], ["Challan No", "Date", "Dealer Name", "Town", "Transport Details", "LR No", "Sr", "Serial Number", "Product Code", "Description", "Qty", "Base MRP", "Taxable Value (70%)", "Complaint No"]];
-        let totalQtyAll = 0, totalTaxAll = 0;
-        logs.forEach(packet => { packet.items.forEach(item => { const qty = parseInt(item.qty) || 0; const taxable = parseFloat(item.taxable) || 0; totalQtyAll += qty; totalTaxAll += taxable; matrix.push([packet.chNo, formatCustomDate(packet.date), packet.dealer, packet.town || "N/A", packet.transport, packet.lr || "N/A", item.sr, item.serial || "N/A", item.code, item.desc, qty, parseFloat(item.rate).toFixed(2), taxable.toFixed(2), item.complaint || "N/A"]); }); });
-        matrix.push(["", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
-        matrix.push(["GRAND TOTAL", "", "", "", "", "", "", "", "", "", totalQtyAll, "", Math.round(totalTaxAll).toFixed(2), ""]);
-        const ws = XLSX.utils.aoa_to_sheet(matrix); const wb = XLSX.utils.book_new();
-        ws['!cols'] = [{wch:12},{wch:14},{wch:30},{wch:15},{wch:35},{wch:12},{wch:6},{wch:15},{wch:12},{wch:25},{wch:8},{wch:12},{wch:16},{wch:15}];
-        XLSX.utils.book_append_sheet(wb, ws, "Master Reconciliation"); XLSX.writeFile(wb, `Hawkins_Master_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+        if(window.savedDatabaseLogs.length === 0) { alert("No synchronized ledger databases available to compile report."); return; }
+        const matrix = [["Master Challan Report Index Entry Logs"], ["Generated Dt Timestamp:", new Date().toLocaleDateString()], [], ["Challan No", "Challan Date", "Dealer Target Name", "Town/City", "Total Quantity Items", "Total Taxable Return Value (INR)", "LR Reference No", "Transport Vehicle Carrier"]];
+        window.savedDatabaseLogs.forEach(l => {
+            matrix.push([l.chNo, formatCustomDate(l.date), l.dealer, l.town, l.totalItems, l.totalAmt, l.lr, l.transport]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(matrix); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Master Log Analytics"); XLSX.writeFile(wb, "Hawkins_Master_Challan_Log_Summary.xlsx");
+    }
+
+    function convertNumberToWords(amount) {
+        var words = new Array(); words[0] = ''; words[1] = 'One'; words[2] = 'Two'; words[3] = 'Three'; words[4] = 'Four'; words[5] = 'Five'; words[6] = 'Six'; words[7] = 'Seven'; words[8] = 'Eight'; words[9] = 'Nine'; words[10] = 'Ten'; words[11] = 'Eleven'; words[12] = 'Twelve'; words[13] = 'Thirteen'; words[14] = 'Fourteen'; words[15] = 'Fifteen'; words[16] = 'Sixteen'; words[17] = 'Seventeen'; words[18] = 'Eighteen'; words[19] = 'Nineteen'; words[20] = 'Twenty'; words[30] = 'Thirty'; words[40] = 'Forty'; words[50] = 'Fifty'; words[60] = 'Sixty'; words[70] = 'Seventy'; words[80] = 'Eighty'; words[9] = 'Ninety'; amount = amount.toString(); var atemp = amount.split("."); var number = atemp[0].split(",").join(""); var n_length = number.length; var words_string = ""; if (n_length <= 9) { var n_array = new Array(0, 0, 0, 0, 0, 0, 0, 0, 0); var received_n_array = new Array(); for (var i = 0; i < n_length; i++) { received_n_array[i] = number.substr(i, 1); } for (var i = 9 - n_length, j = 0; i < 9; i++, j++) { n_array[i] = received_n_array[j]; } for (var i = 0, j = 1; i < 9; i++, j++) { if (i == 0 || i == 2 || i == 4 || i == 7) { if (n_array[i] == 1) { n_array[j] = 10 + parseInt(n_array[j]); n_array[i] = 0; } } } var value = ""; for (var i = 0; i < 9; i++) { if (i == 0 || i == 2 || i == 4 || i == 7) { value = n_array[i] * 10; } else { value = n_array[i]; } if (value != 0) { words_string += words[value] + " "; } if ((i == 1 && value != 0) || (i == 0 && value != 0 && n_array[i + 1] == 0)) { words_string += "Crores "; } if ((i == 3 && value != 0) || (i == 2 && value != 0 && n_array[i + 1] == 0)) { words_string += "Lakhs "; } if ((i == 5 && value != 0) || (i == 4 && value != 0 && n_array[i + 1] == 0)) { words_string += "Thousands "; } if (i == 6 && value != 0 && (n_array[i + 1] != 0 || n_array[i + 2] != 0)) { words_string += "Hundred and "; } else if (i == 6 && value != 0) { words_string += "Hundred "; } } words_string = words_string.split("  ").join(" "); } return words_string.trim();
     }
 </script>
 </body>
