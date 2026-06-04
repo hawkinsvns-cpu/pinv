@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hawkins Damage Stock Pro System (v13.0)</title>
-    <!-- SheetJS for Excel Workflows -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- Google API Client Libraries for Drive Integration -->
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
     <style>
@@ -156,7 +154,6 @@
 <div class="container">
     <div class="header-title"><span>📦</span> Hawkins Damage Stock Pro System (v13.0)</div>
 
-    <!-- GOOGLE DRIVE MANAGER BOX -->
     <div class="cloud-settings-zone">
         <div style="display: flex; gap: 15px; align-items: center; flex-grow: 1;">
             <label style="font-weight: bold; font-size: 13px; color: #495057;">☁️ Google Client ID (Optional):</label>
@@ -169,7 +166,6 @@
         </div>
     </div>
 
-    <!-- Excel Hooks -->
     <div class="excel-section">
         <div class="excel-box">
             <label>1. Connect Dealer Excel File (`dealer list1.xlsx`):</label>
@@ -181,13 +177,11 @@
         </div>
     </div>
 
-    <!-- Live Trackers -->
     <div class="banner-container">
         <div id="productBanner" class="status-banner banner-warning">⚠️ Default System Products Loaded: 4 Items Active</div>
         <div id="dealerBanner" class="status-banner banner-warning">⚠️ Default Core Dealers Loaded: 3 Dealers Active</div>
     </div>
 
-    <!-- Metadata Panel -->
     <div class="section-heading"><span>📋</span> Document Identity & Dealer Selection</div>
     <div class="form-grid">
         <div class="form-group">
@@ -226,7 +220,6 @@
         </div>
     </div>
 
-    <!-- Active Row Builder -->
     <div class="section-heading"><span>🛒</span> Active Stock Entry Row</div>
     <div class="action-row">
         <div class="form-grid" style="grid-template-columns: 2fr 2fr 2fr 1fr 1fr;">
@@ -258,7 +251,6 @@
         </div>
     </div>
 
-    <!-- Grid Layout Table -->
     <div class="table-responsive">
         <table id="itemsTable">
             <thead>
@@ -278,10 +270,8 @@
         </table>
     </div>
 
-    <!-- Action Execution Hooks -->
     <button type="button" class="btn btn-success" id="saveBillBtn">💾 Save & Print Professional Bill</button>
 
-    <!-- Local Sessions History Log -->
     <div class="section-heading"><span>📜</span> Browser Saved Local Records</div>
     <div class="table-responsive">
         <table>
@@ -301,7 +291,6 @@
     </div>
 </div>
 
-<!-- ================= BRANDED PRINT LAYOUT (1-PAGE FIXED) ================= -->
 <div id="invoice-preview">
     <div class="dc-top-badge">Delivery Challan</div>
     <table class="brand-header-table">
@@ -374,14 +363,11 @@
         <div class="sig-box">For HAWKINS COOKERS LIMITED<br><br><br>Authorized Signatory</div>
     </div>
 
-    <!-- NEW FIXED MAXIMUM BOTTOM POSITION STRUCTURAL CONTROL PACKET -->
     <div class="bottom-fixed-sticky-zone">
-        <!-- "No Commercial Value - Not For Sale" text box properly centered right above the footer -->
         <div class="middle-warning-zone">
             <div class="commercial-warning-text">No Commercial Value - Not For Sale</div>
         </div>
         
-        <!-- Grey Box Absolute Footer Structure -->
         <div class="mumbai-absolute-footer">
             <table class="mumbai-footer-table">
                 <tr>
@@ -429,7 +415,6 @@
         refreshDatalists();
         renderHistoryLogs();
         
-        // Auto-load saved client ID from local memory if existing
         if(customClientId) {
             document.getElementById('driveClientId').value = customClientId;
             initGoogleLibraryProtocols(customClientId);
@@ -443,7 +428,6 @@
         document.getElementById('saveBillBtn').addEventListener('click', validateAndSaveBill);
     });
 
-    // Save and Trigger Dynamic Client Identity Key Hook
     function saveAndInitCustomDrive() {
         const inputId = document.getElementById('driveClientId').value.trim();
         if(!inputId) {
@@ -573,6 +557,68 @@
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
 
+    // FIXED: Google Drive Upload logic ko complete aur operational kiya gaya
+    function uploadToGoogleDrive(workbook, filename) {
+        if (!accessToken) {
+            console.log("Drive not connected, skipping cloud upload.");
+            return;
+        }
+        try {
+            const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+            function s2ab(s) { 
+                const buf = new ArrayBuffer(s.length); 
+                const view = new Uint8Array(buf); 
+                for (let i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF; 
+                return buf; 
+            }
+            const blob = new Blob([s2ab(wbout)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+            const metadata = { 'name': filename, 'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+            const formData = new FormData();
+            formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            formData.append('file', blob);
+
+            fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST',
+                headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Successfully saved to Google Drive:", data);
+                alert("File successfully saved to Google Drive!");
+            })
+            .catch(err => console.error("Drive upload failed:", err));
+        } catch(e) {
+            console.error("Error creating blob for drive:", e);
+        }
+    }
+
+    function buildChallanWorkbook(packet) {
+        const matrix = [
+            ["HAWKINS COOKERS LIMITED - DELIVERY CHALLAN REPORT"], [ ],
+            ["Challan No:", packet.chNo, "", "Challan Date:", formatCustomDate(packet.date)],
+            ["Dealer Name:", packet.dealer, "", "Town/City:", packet.town || "N/A"],
+            ["LR No:", packet.lr || "N/A", "", "Transport Route:", packet.transport], [ ],
+            ["Sr", "Serial Number", "Code", "Product Name / Description", "Qty", "Base MRP", "Taxable Value", "Complaint No"]
+        ];
+
+        let totalQty = 0; let totalTax = 0;
+        packet.items.forEach(i => {
+            totalQty += parseInt(i.qty); totalTax += parseFloat(i.taxable);
+            matrix.push([i.sr, i.serial, i.code, i.desc, i.qty, parseFloat(i.rate).toFixed(2), parseFloat(i.taxable).toFixed(2), i.complaint]);
+        });
+
+        matrix.push(["", "", "", "TOTAL SUMMARY", totalQty, "", Math.round(totalTax).toFixed(2), ""]);
+
+        const ws = XLSX.utils.aoa_to_sheet(matrix);
+        const wb = XLSX.utils.book_new();
+        ws['!cols'] = [{wch:6},{wch:18},{wch:12},{wch:30},{wch:8},{wch:12},{wch:15},{wch:15}];
+        XLSX.utils.book_append_sheet(wb, ws, "Challan Summary");
+        return wb;
+    }
+
+    // FIXED: Save function ko local storage update karne aur drive integration trigger karne ke liye optimize kiya gaya
     function validateAndSaveBill() {
         const chNo = document.getElementById('challanNo').value.trim();
         const date = document.getElementById('challanDate').value;
@@ -582,7 +628,7 @@
         const lr = document.getElementById('lrNo').value;
 
         if(!chNo || !date || !dName || window.activeStockRows.length === 0) {
-            alert("Please operationalize a dealer selection and add entries before printing!");
+            alert("Please select a dealer and add items before saving/printing!");
             return;
         }
 
@@ -602,11 +648,11 @@
         document.getElementById('pTotalQty').innerText = totQty;
         document.getElementById('pTotalValue').innerText = "₹" + Math.round(totVal).toFixed(2);
         
-        // Convert total to words logic
         document.getElementById('pAmountWords').innerText = "Amount In Words: Rupees " + convertNumberToWords(Math.round(totVal)) + " Only";
 
         const logPacket = { chNo, date, dealer: dName, town: dTown, transport, lr, totalItems: totQty, totalAmt: Math.round(totVal), items: [...window.activeStockRows] };
         
+        // Asli Local Storage Sync Connection Hook
         const existingIdx = window.savedDatabaseLogs.findIndex(l => l.chNo === chNo);
         if(existingIdx >= 0) window.savedDatabaseLogs[existingIdx] = logPacket;
         else window.savedDatabaseLogs.push(logPacket);
@@ -614,10 +660,16 @@
         localStorage.setItem('hwk_challan_logs', JSON.stringify(window.savedDatabaseLogs));
         renderHistoryLogs();
         
-        // Trigger Standard Print Setup Context
+        // FIXED: Excel file workbook generate karke Google Drive par auto-save karna
+        const wb = buildChallanWorkbook(logPacket);
+        if (accessToken) { 
+            uploadToGoogleDrive(wb, `Challan_${chNo}_${dName.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`); 
+        }
+
+        // Window print popup trigger
         window.print();
         
-        // Post execution auto-increment logic
+        // Form Auto Reset Logic (preventing browser loop loss)
         const nextNum = parseInt(chNo) + 1;
         if(!isNaN(nextNum)) document.getElementById('challanNo').value = nextNum;
         window.activeStockRows = [];
