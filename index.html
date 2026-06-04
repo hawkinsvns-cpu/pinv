@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawkins Damage Stock Pro System (v13.0)</title>
+    <title>Hawkins Damage Stock Pro System (v14.0)</title>
+    <!-- SheetJS for Excel Workflows -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google API Client Libraries for Drive Integration -->
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
     <style>
@@ -53,7 +55,6 @@
 
         .header-title span { margin-right: 10px; font-size: 28px; }
 
-        /* Cloud Dynamic Settings Panel */
         .cloud-settings-zone {
             background-color: #f1f3f5;
             border: 1px solid #ced4da;
@@ -131,7 +132,6 @@
         .sign-row { display: flex; justify-content: flex-end; margin-top: 15px; font-size: 11px; }
         .sig-box { width: 220px; border-top: 1px solid #000; text-align: center; padding-top: 4px; font-weight: bold; }
         
-        /* FIXED MAXIMUM BOTTOM ALIGNMENT STRUCTURAL CONTAINERS */
         .bottom-fixed-sticky-zone { position: absolute; bottom: 10px; left: 12px; right: 12px; display: flex; flex-direction: column; gap: 12px; }
         .middle-warning-zone { text-align: center; width: 100%; margin: 0 auto; }
         .commercial-warning-text { font-size: 14px; font-weight: bold; font-style: italic; letter-spacing: 1px; text-transform: uppercase; display: inline-block; border: 1px double #000; padding: 5px 20px; background: #fff !important; }
@@ -152,12 +152,13 @@
 <body>
 
 <div class="container">
-    <div class="header-title"><span>📦</span> Hawkins Damage Stock Pro System (v13.0)</div>
+    <div class="header-title"><span>📦</span> Hawkins Damage Stock Pro System (v14.0)</div>
 
+    <!-- GOOGLE DRIVE MANAGER BOX -->
     <div class="cloud-settings-zone">
         <div style="display: flex; gap: 15px; align-items: center; flex-grow: 1;">
-            <label style="font-weight: bold; font-size: 13px; color: #495057;">☁️ Google Client ID (Optional):</label>
-            <input type="text" id="driveClientId" placeholder="Paste Client ID to connect any Drive..." style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 60%;">
+            <label style="font-weight: bold; font-size: 13px; color: #495057;">☁️ Google Client ID:</label>
+            <input type="text" id="driveClientId" placeholder="Paste Client ID to connect..." style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 60%;">
             <button type="button" class="btn" style="background-color: #2b8a3e; padding: 8px 12px;" onclick="saveAndInitCustomDrive()">Save & Init Cloud</button>
         </div>
         <div>
@@ -166,6 +167,7 @@
         </div>
     </div>
 
+    <!-- Excel Hooks -->
     <div class="excel-section">
         <div class="excel-box">
             <label>1. Connect Dealer Excel File (`dealer list1.xlsx`):</label>
@@ -177,11 +179,13 @@
         </div>
     </div>
 
+    <!-- Live Trackers -->
     <div class="banner-container">
         <div id="productBanner" class="status-banner banner-warning">⚠️ Default System Products Loaded: 4 Items Active</div>
         <div id="dealerBanner" class="status-banner banner-warning">⚠️ Default Core Dealers Loaded: 3 Dealers Active</div>
     </div>
 
+    <!-- Metadata Panel -->
     <div class="section-heading"><span>📋</span> Document Identity & Dealer Selection</div>
     <div class="form-grid">
         <div class="form-group">
@@ -220,6 +224,7 @@
         </div>
     </div>
 
+    <!-- Active Row Builder -->
     <div class="section-heading"><span>🛒</span> Active Stock Entry Row</div>
     <div class="action-row">
         <div class="form-grid" style="grid-template-columns: 2fr 2fr 2fr 1fr 1fr;">
@@ -251,6 +256,7 @@
         </div>
     </div>
 
+    <!-- Grid Layout Table -->
     <div class="table-responsive">
         <table id="itemsTable">
             <thead>
@@ -270,8 +276,10 @@
         </table>
     </div>
 
+    <!-- Action Execution Hooks -->
     <button type="button" class="btn btn-success" id="saveBillBtn">💾 Save & Print Professional Bill</button>
 
+    <!-- Local Sessions History Log -->
     <div class="section-heading"><span>📜</span> Browser Saved Local Records</div>
     <div class="table-responsive">
         <table>
@@ -291,6 +299,7 @@
     </div>
 </div>
 
+<!-- ================= BRANDED PRINT LAYOUT (1-PAGE FIXED) ================= -->
 <div id="invoice-preview">
     <div class="dc-top-badge">Delivery Challan</div>
     <table class="brand-header-table">
@@ -407,6 +416,7 @@
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
     let tokenClient;
     let accessToken = null;
+    let targetFolderId = null;
 
     document.addEventListener("DOMContentLoaded", function() {
         const today = new Date().toISOString().split('T')[0];
@@ -453,6 +463,8 @@
                             gapi.client.setToken({ access_token: accessToken });
                             document.getElementById('driveStatus').innerText = "✅ Cloud Linked!";
                             document.getElementById('driveStatus').style.color = "green";
+                            
+                            verifyOrCreateTargetFolder();
                         },
                     });
                     document.getElementById('connectDriveBtn').disabled = false;
@@ -467,6 +479,30 @@
 
     function handleAuthClick() {
         if (tokenClient) { tokenClient.requestAccessToken({prompt: 'consent'}); }
+    }
+
+    function verifyOrCreateTargetFolder() {
+        if (!accessToken) return;
+        gapi.client.drive.files.list({
+            q: "name = 'Hawkins_Challans' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+            fields: 'files(id, name)',
+            spaces: 'drive'
+        }).then(function(response) {
+            var files = response.result.files;
+            if (files && files.length > 0) {
+                targetFolderId = files[0].id;
+                console.log("Found folder: " + targetFolderId);
+            } else {
+                var folderMetadata = { 'name': 'Hawkins_Challans', 'mimeType': 'application/vnd.google-apps.folder' };
+                gapi.client.drive.files.create({
+                    resource: folderMetadata,
+                    fields: 'id'
+                }).then(function(resp) {
+                    targetFolderId = resp.result.id;
+                    console.log("Created fresh folder: " + targetFolderId);
+                }).catch(e => console.error("Error creating folder: ", e));
+            }
+        }).catch(err => console.error("Folder check error: ", err));
     }
 
     function refreshDatalists() {
@@ -561,10 +597,7 @@
     }
 
     function uploadToGoogleDrive(workbook, filename) {
-        if (!accessToken) {
-            alert("⚠️ Cloud Account Not Authenticated. Saved Locally Only!");
-            return;
-        }
+        if (!accessToken) return;
         try {
             const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
             function s2ab(s) { 
@@ -574,8 +607,14 @@
                 return buf; 
             }
             const blob = new Blob([s2ab(wbout)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-            const metadata = { 'name': filename, 'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+            
+            const metadata = { 
+                'name': filename, 
+                'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            };
+            if(targetFolderId) {
+                metadata.parents = [targetFolderId];
+            }
             
             var boundary = '-------314159265358979323846';
             var delimiter = "\r\n--" + boundary + "\r\n";
@@ -586,7 +625,6 @@
             reader.onload = function (e) {
                 var contentType = blob.type || 'application/octet-stream';
                 var metadataPart = JSON.stringify(metadata);
-
                 var multipartRequestBody =
                     delimiter +
                     'Content-Type: application/json\r\n\r\n' +
@@ -607,9 +645,9 @@
 
                 request.execute(function (file) {
                     if (file && file.id) {
-                        alert("🚀 Success! File Google Drive par save ho gayi: " + filename);
+                        alert("🚀 Cloud Save Successful: Uploaded inside 'Hawkins_Challans' folder!");
                     } else {
-                        alert("❌ Drive Upload Fail: " + (file.error ? file.error.message : "Unknown Error"));
+                        alert("❌ Drive Upload Fail: " + (file.error ? file.error.message : "Unknown Error") + "\n\n⚠️ Note: browser memory me save ho chuka hai, tension mat lo!");
                     }
                 });
             };
@@ -632,7 +670,6 @@
             totalQty += parseInt(i.qty); totalTax += parseFloat(i.taxable);
             matrix.push([i.sr, i.serial, i.code, i.desc, i.qty, parseFloat(i.rate).toFixed(2), parseFloat(i.taxable).toFixed(2), i.complaint]);
         });
-
         matrix.push(["", "", "", "TOTAL SUMMARY", totalQty, "", Math.round(totalTax).toFixed(2), ""]);
 
         const ws = XLSX.utils.aoa_to_sheet(matrix);
@@ -672,11 +709,10 @@
         });
         document.getElementById('pTotalQty').innerText = totQty;
         document.getElementById('pTotalValue').innerText = "₹" + Math.round(totVal).toFixed(2);
-        
         document.getElementById('pAmountWords').innerText = "Amount In Words: Rupees " + convertNumberToWords(Math.round(totVal)) + " Only";
 
+        // ================= PIPELINE 1: LOCAL SYSTEM BACKUP =================
         const logPacket = { chNo, date, dealer: dName, town: dTown, transport, lr, totalItems: totQty, totalAmt: Math.round(totVal), items: [...window.activeStockRows] };
-        
         const existingIdx = window.savedDatabaseLogs.findIndex(l => l.chNo === chNo);
         if(existingIdx >= 0) window.savedDatabaseLogs[existingIdx] = logPacket;
         else window.savedDatabaseLogs.push(logPacket);
@@ -684,13 +720,22 @@
         localStorage.setItem('hwk_challan_logs', JSON.stringify(window.savedDatabaseLogs));
         renderHistoryLogs();
         
-        const wb = buildChallanWorkbook(logPacket);
-        if (accessToken) { 
-            uploadToGoogleDrive(wb, `Challan_${chNo}_${dName.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`); 
+        // ================= PIPELINE 2: GOOGLE DRIVE CLOUD BACKUP =================
+        try {
+            const wb = buildChallanWorkbook(logPacket);
+            if (accessToken) { 
+                uploadToGoogleDrive(wb, `Challan_${chNo}_${dName.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`); 
+            } else {
+                console.log("Drive not connected. Saved only to Local Memory.");
+            }
+        } catch(cloudErr) {
+            console.error("Cloud Error: ", cloudErr);
         }
 
+        // Trigger safe print window
         setTimeout(() => { window.print(); }, 800);
 
+        // Auto Increments Challan
         const nextNum = parseInt(chNo) + 1;
         if(!isNaN(nextNum)) document.getElementById('challanNo').value = nextNum;
         window.activeStockRows = [];
