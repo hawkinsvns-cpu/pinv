@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hawkins Damage Stock Pro System (v13.0)</title>
+    <!-- SheetJS for Excel Workflows -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google API Client Libraries for Drive Integration -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+    <style>
+        :root {
+            --primary-color: #a83232;
+            --primary-hover: #822424;
+            --bg-color: #f7f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #dddddd;
+            --warning-bg: #fff3cd;
+            --warning-border: #ffeeba;
+            --warning-text: #856404;
+            --success-bg: #d4edda;
+            --success-border: #c3e6cb;
+            --success-text: #155724;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            border-bottom: 2px solid #eeeeee;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .header-title span { margin-right: 10px; font-size: 28px; }
+
+        /* Cloud Dynamic Settings Panel */
+        .cloud-settings-zone {
+            background-color: #f1f3f5;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .excel-section {
+            border: 2px dashed #d9534f;
+            background-color: #fff9f9;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .excel-box { display: flex; flex-direction: column; }
+        .excel-box label { font-weight: 600; margin-bottom: 8px; color: #c9302c; font-size: 14px; }
+        .file-input-wrapper { position: relative; display: flex; align-items: center; border: 1px solid #ccc; background: #fff; padding: 8px 12px; border-radius: 4px; }
+        
+        .banner-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .status-banner { padding: 12px 15px; border-radius: 6px; font-size: 13px; font-weight: 600; display: flex; align-items: center; transition: all 0.3s ease; }
+        .banner-warning { background-color: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning-text); }
+        .banner-success { background-color: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-text); }
+
+        .section-heading { font-size: 18px; font-weight: 600; color: var(--primary-color); margin: 25px 0 15px 0; display: flex; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #555; }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 14px; background-color: #fff; }
+        .form-group input:disabled { background-color: #f1f3f5; color: #666; }
+
+        .action-row { background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 6px; margin-bottom: 25px; }
+        .btn { background-color: var(--primary-color); color: white; border: none; padding: 10px 18px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn-success { background-color: #1e7e34; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; font-size: 16px; margin-top: 20px; }
+
+        .table-responsive { overflow-x: auto; margin-top: 15px; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+        th { background-color: #f1f3f5; color: #495057; padding: 12px; border-bottom: 2px solid var(--border-color); }
+        td { padding: 12px; border-bottom: 1px solid var(--border-color); }
+
+        /* ================= INVOICE PRINT LAYOUT (STRICT A4 1-PAGE) ================= */
+        #invoice-preview { display: none; width: 100%; max-width: 190mm; background: #fff; color: #000; border: 1px solid #000; padding: 12px; box-sizing: border-box; margin: 10px auto; font-family: Arial, sans-serif; position: relative; min-height: 270mm; }
+        .dc-top-badge { text-align: center; font-size: 16px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; border-bottom: 2px solid #000; padding-bottom: 2px; }
+        .brand-header-table { width: 100%; border: none; margin-bottom: 8px; }
+        .brand-header-table td { border: none; padding: 0; vertical-align: top; }
+        .logo-circle { width: 55px; height: 55px; background: #d32f2f !important; border-radius: 50%; border: 1px solid #000; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .logo-stripe { background: white !important; width: 100%; text-align: center; font-weight: 900; font-size: 11px; padding: 2px 0; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+        .comp-title { font-size: 18px; font-weight: bold; margin: 0; }
+        .comp-subtitle { font-size: 11px; font-weight: bold; margin: 1px 0; }
+        .comp-desc { font-size: 10px; line-height: 1.2; }
+        
+        .split-box { display: grid; grid-template-columns: 1.2fr 0.8fr; border: 1px solid #000; margin-bottom: 8px; }
+        .pane-left, .pane-right { padding: 6px; font-size: 10.5px; line-height: 1.3; }
+        .pane-left { border-right: 1px solid #000; }
+        
+        .ribbon-bar { background: #f2f2f2 !important; border: 1px dashed #000; padding: 5px; font-size: 10.5px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 3px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        
+        .main-print-table { width: 100%; border: 1px solid #000; margin-top: 2px; border-collapse: collapse; }
+        .main-print-table th, .main-print-table td { border: 1px solid #000; padding: 5px; font-size: 10.5px; }
+        .main-print-table th { background: #e6e6e6 !important; font-weight: bold; text-align: center; }
+        .text-right { text-align: right; } .text-center { text-align: center; }
+        .legal-footer { margin-top: 8px; font-size: 9.5px; border-left: 3px solid #000; padding-left: 6px; font-style: italic; line-height: 1.2; }
+        
+        /* Centered Warning Badge */
+        .middle-warning-zone { text-align: center; margin: 25px 0 10px 0; width: 100%; }
+        .commercial-warning-text { font-size: 15px; font-weight: bold; font-style: italic; letter-spacing: 1px; text-transform: uppercase; display: inline-block; border: 1px double #000; padding: 4px 15px; }
+
+        .sign-row { display: flex; justify-content: flex-end; margin-top: 15px; font-size: 11px; }
+        .sig-box { width: 220px; border-top: 1px solid #000; text-align: center; padding-top: 4px; font-weight: bold; }
+        
+        /* BOTTOM ABSOLUTE FOOTER STYLES */
+        .mumbai-absolute-footer { position: absolute; bottom: 10px; left: 12px; right: 12px; border-top: 2px double #000; padding-top: 6px; }
+        .mumbai-footer-table { width: 100%; border-collapse: collapse; }
+        .mumbai-footer-table td { border: 1px solid #000; padding: 4px; font-size: 9px; text-align: left; vertical-align: top; background: #fafafa !important; }
+        .corporate-tag { text-align: center; font-size: 8.5px; font-weight: bold; letter-spacing: 1px; margin-top: 4px; text-transform: uppercase; }
+
+        @media print {
+            body { padding: 0; background: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .container { display: none !important; }
+            #invoice-preview { display: block !important; border: none; margin: 0; padding: 0; width: 100%; height: 100%; min-height: 285mm; page-break-inside: avoid; }
+            @page { size: A4; margin: 6mm 8mm 6mm 8mm; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-title"><span>📦</span> Hawkins Damage Stock Pro System (v13.0)</div>
+
+    <!-- NEW OPTIONAL & DYNAMIC GOOGLE DRIVE MANAGER BOX -->
+    <div class="cloud-settings-zone">
+        <div style="display: flex; gap: 15px; align-items: center; flex-grow: 1;">
+            <label style="font-weight: bold; font-size: 13px; color: #495057;">☁️ Google Client ID (Optional):</label>
+            <input type="text" id="driveClientId" placeholder="Paste Client ID to connect any Drive..." style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 60%;">
+            <button type="button" class="btn" style="background-color: #2b8a3e; padding: 8px 12px;" onclick="saveAndInitCustomDrive()">Save & Init Cloud</button>
+        </div>
+        <div>
+            <button type="button" class="btn" style="background-color: #4285F4;" id="connectDriveBtn" onclick="handleAuthClick()" disabled>🔗 Link Drive Account</button>
+            <span id="driveStatus" style="font-size: 12px; margin-left: 10px; font-weight: bold; color: #c92a2a;">Not Configured</span>
+        </div>
+    </div>
+
+    <!-- Excel Hooks -->
+    <div class="excel-section">
+        <div class="excel-box">
+            <label>1. Connect Dealer Excel File (`dealer list1.xlsx`):</label>
+            <div class="file-input-wrapper"><input type="file" id="dealerFileInput" accept=".xlsx, .xls"></div>
+        </div>
+        <div class="excel-box">
+            <label>2. Connect Product Price Excel File (`product list_2.xlsx`):</label>
+            <div class="file-input-wrapper"><input type="file" id="productFileInput" accept=".xlsx, .xls"></div>
+        </div>
+    </div>
+
+    <!-- Live Trackers -->
+    <div class="banner-container">
+        <div id="productBanner" class="status-banner banner-warning">⚠️ Default System Products Loaded: 4 Items Active</div>
+        <div id="dealerBanner" class="status-banner banner-warning">⚠️ Default Core Dealers Loaded: 3 Dealers Active</div>
+    </div>
+
+    <!-- Metadata Panel -->
+    <div class="section-heading"><span>📋</span> Document Identity & Dealer Selection</div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label>Delivery Challan No (Auto-Increments):</label>
+            <input type="text" id="challanNo" value="260034" style="font-weight: bold; color: #c9302c;">
+        </div>
+        <div class="form-group">
+            <label>Challan Date (Select Calendar):</label>
+            <input type="date" id="challanDate">
+        </div>
+        <div class="form-group">
+            <label>Search Dealer Code / Name:</label>
+            <input type="text" id="searchDealer" placeholder="Type Code or Name..." list="dealerDataList">
+            <datalist id="dealerDataList"></datalist>
+        </div>
+    </div>
+
+    <div class="form-grid" style="grid-template-columns: 1.2fr 1fr 1.8fr;">
+        <div class="form-group">
+            <label>Selected Dealer Target Name:</label>
+            <input type="text" id="dealerTargetName" value="" placeholder="Auto-filled via selection" disabled style="font-weight:bold; color:var(--primary-color);">
+        </div>
+        <div class="form-group">
+            <label>Dealer Town / City:</label>
+            <input type="text" id="dealerTargetTown" value="" placeholder="Auto-filled Town" disabled style="font-weight:bold; color:#555;">
+        </div>
+        <div class="form-group">
+            <label>Transport Route / Details:</label>
+            <input type="text" id="transportDetails" value="Vikas Transport Through Raj Road Lines - Muthiganj Allahabad">
+        </div>
+    </div>
+    <div class="form-grid" style="grid-template-columns: 1fr 2fr;">
+        <div class="form-group">
+            <label>LR No:</label>
+            <input type="text" id="lrNo" value="N/A" placeholder="Enter Lorry Receipt No">
+        </div>
+    </div>
+
+    <!-- Active Row Builder -->
+    <div class="section-heading"><span>🛒</span> Active Stock Entry Row</div>
+    <div class="action-row">
+        <div class="form-grid" style="grid-template-columns: 2fr 2fr 2fr 1fr 1fr;">
+            <div class="form-group">
+                <label>Product Code / Search Name:</label>
+                <input type="text" id="searchProduct" placeholder="Type Code (e.g. CL15)..." list="productDataList">
+                <datalist id="productDataList"></datalist>
+            </div>
+            <div class="form-group">
+                <label>Item Description:</label>
+                <input type="text" id="itemDescription" disabled>
+            </div>
+            <div class="form-group">
+                <label>Serial Number:</label>
+                <input type="text" id="serialNumber" placeholder="Enter serial code">
+            </div>
+            <div class="form-group">
+                <label>Qty:</label>
+                <input type="number" id="itemQty" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label>Complaint No:</label>
+                <input type="text" id="complaintNo" placeholder="Complaint ID">
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn" id="addItemBtn" style="margin-top: 10px;">+ Add Item To Row</button>
+            <button type="button" class="btn" style="margin-top: 10px; background-color: #2c3e50;" onclick="exportMasterReportToExcel()">📊 Export All Records to Master Excel</button>
+        </div>
+    </div>
+
+    <!-- Grid Layout Table -->
+    <div class="table-responsive">
+        <table id="itemsTable">
+            <thead>
+                <tr>
+                    <th>Sr</th>
+                    <th>Serial Number</th>
+                    <th>Product Code</th>
+                    <th>Item Name / Description</th>
+                    <th>Quantity</th>
+                    <th>Base MRP</th>
+                    <th>Taxable Value (70%)</th>
+                    <th>Complaint No</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="itemsTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Action Execution Hooks -->
+    <button type="button" class="btn btn-success" id="saveBillBtn">💾 Save & Print Professional Bill</button>
+
+    <!-- Local Sessions History Log -->
+    <div class="section-heading"><span>📜</span> Browser Saved Local Records</div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Challan No</th>
+                    <th>Date</th>
+                    <th>Dealer Target Name</th>
+                    <th>Total Items</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="historyLogBody">
+                <tr><td colspan="5" style="text-align:center; color:#999;">No saved local history entries found in this session.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ================= BRANDED PRINT LAYOUT (1-PAGE FIXED) ================= -->
+<div id="invoice-preview">
+    <div class="dc-top-badge">Delivery Challan[cite: 1]</div>
+    <table class="brand-header-table">[cite: 1]
+        <tr>
+            <td style="width:65px;">
+                <div class="logo-circle"><div class="logo-stripe">Hawkins</div></div>[cite: 1]
+            </td>
+            <td style="padding-left:12px;">
+                <div class="comp-title">HAWKINS COOKERS LIMITED</div>[cite: 1]
+                <div class="comp-subtitle">C & FA : NORTHERN GOODS CARRIERS</div>[cite: 1]
+                <div class="comp-desc">
+                    HARIHARPUR, ROHANIYA DLW ROAD ( Near Omkar Upwan ), VARANASI - 221108<br>[cite: 1]
+                    <strong>MOB:</strong> 8840390116 | <strong>GSTIN:</strong> 09AAACH1784M1Z7[cite: 1]
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="split-box">[cite: 1]
+        <div class="pane-left">
+            <strong>To,</strong><br>[cite: 1]
+            <strong>Hawkins Cookers Limited.</strong><br>[cite: 1]
+            Plot No A-1, A-2, A-14, A-15 UPSIDC INDUSTRIAL AREA<br>[cite: 1]
+            SATHARIYA - JAUNPUR<br>[cite: 1]
+            <strong>GSTIN:</strong> 09AAACH1784M1Z7[cite: 1]
+        </div>
+        <div class="pane-right">
+            <strong>Delivery Challan No:</strong> <span id="pChallanNo" style="font-weight:bold;"></span><br>[cite: 1]
+            <strong>Delivery Challan Dt:</strong> <span id="pChallanDate"></span><br>[cite: 1]
+            <strong>LR NO :</strong> <span id="pLrNo"></span><br>[cite: 1]
+            <strong>TPT :</strong> <span id="pTransport"></span>[cite: 1]
+        </div>
+    </div>
+
+    <div class="ribbon-bar">[cite: 1]
+        <div>📋 <strong>SPECIFICATION:</strong> Unsalable Cookers/Cookwares Damaged Stock Returns</div>[cite: 1]
+        <div>🏭 <strong>DEALER:</strong> <span id="pDealerName" style="font-weight:bold; text-decoration:underline;"></span></div>[cite: 1]
+        <div>📍 <strong>TOWN/CITY:</strong> <span id="pDealerTown" style="font-weight:bold; text-decoration:underline;"></span></div>[cite: 1]
+    </div>
+
+    <table class="main-print-table">[cite: 1]
+        <thead>
+            <tr>
+                <th style="width:5%;">Sr</th>[cite: 1]
+                <th style="width:18%;">Serial Number</th>[cite: 1]
+                <th style="width:12%;">Code</th>[cite: 1]
+                <th style="width:35%;">Product Name / Description</th>[cite: 1]
+                <th style="width:6%;">Qty</th>[cite: 1]
+                <th style="width:10%;">Base MRP</th>[cite: 1]
+                <th style="width:14%;">Taxable Value</th>[cite: 1]
+                <th style="width:12%;">Complaint No</th>[cite: 1]
+            </tr>
+        </thead>
+        <tbody id="pTableBody"></tbody>
+        <tfoot>
+            <tr style="font-weight:bold; background:#eee;">
+                <td colspan="4" class="text-right">TOTAL SUMMARY</td>[cite: 1]
+                <td id="pTotalQty" class="text-center">0</td>[cite: 1]
+                <td></td>
+                <td id="pTotalValue" class="text-right">₹0.00</td>[cite: 1]
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div id="pAmountWords" style="margin-top:8px; font-size:10.5px; font-weight:bold;"></div>[cite: 1]
+    <div class="legal-footer">We certify that these goods are manufacturing defects/damaged stock items being returned to factories. They are unsalable and hold zero commercial values.</div>[cite: 1]
+
+    <!-- Dynamic Warning Badge Centered -->
+    <div class="middle-warning-zone">
+        <div class="commercial-warning-text">No Commercial Value - Not For Sale</div>[cite: 1]
+    </div>
+
+    <div class="sign-row">
+        <div class="sig-box">For HAWKINS COOKERS LIMITED<br><br><br>Authorized Signatory</div>[cite: 1]
+    </div>
+
+    <!-- ABSOLUTE FOOTER -->
+    <div class="mumbai-absolute-footer">
+        <table class="mumbai-footer-table">
+            <tr>
+                <td style="width: 50%;">
+                    <strong>✨ Marketing Office:</strong><br>[cite: 1]
+                    New Udyog Mandir II, Pitambar Lane, Mahim, Mumbai-400 016. Tel.:022 2444 0807, Fax: 022 2444 9152[cite: 1]
+                </td>
+                <td style="width: 50%;">
+                    <strong>🏢 Registered Office:</strong><br>[cite: 1]
+                    Maker Tower F 101, Cuffe Parade, Mumbai - 400 005[cite: 1]
+                </td>
+            </tr>
+        </table>
+        <div class="corporate-tag">Corporate Id. No.: L28997MH1959PLC011304</div>[cite: 1]
+    </div>
+</div>
+
+<script>
+    // System Local Core Framework Storage Memory
+    window.systemProducts = [
+        { code: "CL15", desc: "Classic 1.5L", rate: 1250.0 },
+        { code: "CL20", desc: "Classic 2L", rate: 1425.0 },
+        { code: "CL3T", desc: "Classic 3L", rate: 1675.0 },
+        { code: "CXT35", desc: "Contura Black 3.5L XT", rate: 2950.0 }
+    ];
+    window.coreDealers = [
+        { code: "1600174", name: "BHARAT GLASS STORE -VARANASI", town: "VARANASI" },
+        { code: "1600177", name: "Awadh Bartan Private Limited", town: "LUCKNOW" },
+        { code: "1750050", name: "Asha General Stores", town: "ALLAHABAD" }
+    ];
+    window.activeStockRows = [];
+    window.savedDatabaseLogs = JSON.parse(localStorage.getItem('hwk_challan_logs')) || [];
+
+    // Dynamic Variables for Cloud Settings Room
+    let customClientId = localStorage.getItem('hwk_drive_client_id') || '';
+    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+    let tokenClient;
+    let accessToken = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('challanDate').value = today;
+
+        refreshDatalists();
+        renderHistoryLogs();
+        
+        // Auto-load saved client ID from local memory if existing
+        if(customClientId) {
+            document.getElementById('driveClientId').value = customClientId;
+            initGoogleLibraryProtocols(customClientId);
+        }
+
+        document.getElementById('dealerFileInput').addEventListener('change', handleDealerUpload);
+        document.getElementById('productFileInput').addEventListener('change', handleProductUpload);
+        document.getElementById('searchDealer').addEventListener('input', handleDealerSelection);
+        document.getElementById('searchProduct').addEventListener('input', handleProductSelection);
+        document.getElementById('addItemBtn').addEventListener('click', addItemToGrid);
+        document.getElementById('saveBillBtn').addEventListener('click', validateAndSaveBill);
+    });
+
+    // Save and Trigger Dynamic Client Identity Key Hook
+    function saveAndInitCustomDrive() {
+        const inputId = document.getElementById('driveClientId').value.trim();
+        if(!inputId) {
+            alert("Please input a valid Client ID!");
+            return;
+        }
+        localStorage.setItem('hwk_drive_client_id', inputId);
+        customClientId = inputId;
+        initGoogleLibraryProtocols(customClientId);
+        alert("Google Drive Configuration Updated! You can now click on 'Link Drive Account'.");
+    }
+
+    function initGoogleLibraryProtocols(clientId) {
+        try {
+            gapi.load('client', () => {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: clientId,
+                    scope: SCOPES,
+                    callback: (tokenResponse) => {
+                        if (tokenResponse.error !== undefined) { throw (tokenResponse); }
+                        accessToken = tokenResponse.access_token;
+                        document.getElementById('driveStatus').innerText = "✅ Cloud Linked!";
+                        document.getElementById('driveStatus').style.color = "green";
+                    },
+                });
+                document.getElementById('connectDriveBtn').disabled = false;
+                document.getElementById('driveStatus').innerText = "Ready to Link";
+                document.getElementById('driveStatus').style.color = "orange";
+            });
+        } catch(err) {
+            console.error("Initialization Failed. Verify Client ID.", err);
+        }
+    }
+
+    function handleAuthClick() {
+        if (tokenClient) { tokenClient.requestAccessToken({prompt: 'consent'}); }
+    }
+
+    function refreshDatalists() {
+        const dl = document.getElementById('dealerDataList'); dl.innerHTML = "";
+        window.coreDealers.forEach(d => { let o = document.createElement('option'); o.value = d.code; o.innerText = `${d.name} (${d.town})`; dl.appendChild(o); });
+        const pl = document.getElementById('productDataList'); pl.innerHTML = "";
+        window.systemProducts.forEach(p => { let o = document.createElement('option'); o.value = p.code; o.innerText = p.desc; pl.appendChild(o); });
+    }
+
+    function handleDealerUpload(e) {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            const parsed = jsonData.map(r => ({ 
+                code: String(r['Code'] || '').trim(), 
+                name: String(r['DealerShip'] || '').trim(),
+                town: String(r['Town'] || r['City'] || 'N/A').toUpperCase().trim()
+            })).filter(i => i.code && i.name);
+            if(parsed.length > 0) {
+                window.coreDealers = parsed; refreshDatalists();
+                document.getElementById('dealerBanner').className = "status-banner banner-success";
+                document.getElementById('dealerBanner').innerText = `✅ Core Dealers Synced Successfully: ${window.coreDealers.length} Dealers Active`;
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function handleProductUpload(e) {
+        const file = e.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { range: 1 });
+            const parsed = jsonData.map(r => ({ code: String(r['Code'] || '').trim(), desc: String(r['Description'] || '').trim(), rate: parseFloat(r['Unit Rate(Rs.)']) || 0 })).filter(i => i.code && i.desc);
+            if(parsed.length > 0) {
+                window.systemProducts = parsed; refreshDatalists();
+                document.getElementById('productBanner').className = "status-banner banner-success";
+                document.getElementById('productBanner').innerText = `✅ System Products Synced Successfully: ${window.systemProducts.length} Items Active`;
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function handleDealerSelection(e) {
+        const match = window.coreDealers.find(d => d.code === e.target.value || d.name.toLowerCase().includes(e.target.value.toLowerCase()));
+        if(match) {
+            document.getElementById('dealerTargetName').value = match.name;
+            document.getElementById('dealerTargetTown').value = match.town;
+        }
+    }
+    
+    function handleProductSelection(e) {
+        const match = window.systemProducts.find(p => p.code === e.target.value);
+        document.getElementById('itemDescription').value = match ? match.desc : "";
+    }
+
+    function addItemToGrid() {
+        const code = document.getElementById('searchProduct').value;
+        const desc = document.getElementById('itemDescription').value;
+        const serial = document.getElementById('serialNumber').value;
+        const qty = parseInt(document.getElementById('itemQty').value) || 1;
+        const comp = document.getElementById('complaintNo').value || "N/A";
+        if(!code || !desc) { alert("Please select a valid product code!"); return; }
+        
+        const match = window.systemProducts.find(p => p.code === code);
+        const rate = match ? match.rate : 0;
+        const taxable = (rate * 0.70) * qty;
+
+        window.activeStockRows.push({ sr: window.activeStockRows.length+1, serial: serial||"N/A", code, desc, qty, rate, taxable: taxable.toFixed(2), complaint: comp });
+        renderGridTable();
+        document.getElementById('searchProduct').value = ""; document.getElementById('itemDescription').value = ""; document.getElementById('serialNumber').value = ""; document.getElementById('complaintNo').value = "";
+    }
+
+    function renderGridTable() {
+        const tb = document.getElementById('itemsTableBody'); tb.innerHTML = "";
+        window.activeStockRows.forEach((r, i) => {
+            r.sr = i + 1;
+            tb.innerHTML += `<tr><td>${r.sr}</td><td>${r.serial}</td><td><b>${r.code}</b></td><td>${r.desc}</td><td>${r.qty}</td><td>₹${r.rate}</td><td>₹${r.taxable}</td><td>${r.complaint}</td><td><button class="btn btn-danger" onclick="deleteRow(${i})">Remove</button></td></tr>`;
+        });
+    }
+    window.deleteRow = function(i) { window.activeStockRows.splice(i, 1); renderGridTable(); };
+
+    function formatCustomDate(dateString) {
+        if(!dateString) return "";
+        const parts = dateString.split('-');
+        if(parts.length !== 3) return dateString;
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+
+    function exportSingleChallanExcel(packet) {
+        const matrix = [
+            ["HAWKINS COOKERS LIMITED - DELIVERY CHALLAN REPORT"], [ ],
+            ["Challan No:", packet.chNo, "", "Challan Date:", formatCustomDate(packet.date)],
+            ["Dealer Name:", packet.dealer, "", "Town/City:", packet.town || "N/A"],
+            ["LR No:", packet.lr || "N/A", "", "Transport Route:", packet.transport], [ ],
+            ["Sr", "Serial Number", "Code", "Product Name / Description", "Qty", "Base MRP", "Taxable Value", "Complaint No"]
+        ];
+
+        let totalQty = 0; let totalTax = 0;
+        packet.items.forEach(i => {
+            totalQty += parseInt(i.qty); totalTax += parseFloat(i.taxable);
+            matrix.push([i.sr, i.serial, i.code, i.desc, i.qty, parseFloat(i.rate).toFixed(2), parseFloat(i.taxable).toFixed(2), i.complaint]);
+        });
+
+        matrix.push(["", "", "", "TOTAL SUMMARY", totalQty, "", Math.round(totalTax).toFixed(2), ""]);
+
+        const ws = XLSX.utils.aoa_to_sheet(matrix);
+        const wb = XLSX.utils.book_new();
+        ws['!cols'] = [{wch:6},{wch:18},{wch:12},{wch:30},{wch:8},{wch:12},{wch:15},{wch:15}];
+        XLSX.utils.book_append_sheet(wb, ws, "Challan Summary");
+        
+        XLSX.writeFile(wb, `Challan_${packet.chNo}_${packet.dealer.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`);
+
+        // Dynamic Google Drive Upload Engine
+        if (accessToken) { uploadToGoogleDrive(wb, `Challan_${packet.chNo}.xlsx`); }
+    }
+
+    function uploadToGoogleDrive(workbook, filename) {
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+        function s2ab(s) { const buf = new ArrayBuffer(s.length); const view = new Uint8Array(buf); for (let i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF; return buf; }
+        const blob = new Blob([s2ab(wbout)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+        const metadata = { 'name': filename, 'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+        const formData = new FormData();
+        formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        formData.append('file', blob);
+
+        fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
+            body: formData
+        }).then(response => response.json())
+        .then(data => alert(`✨ File Synced With Linked Drive Cloud Successfully!`))
+        .catch(err => console.error('Drive Cloud Upload Error:', err));
+    }
+
+    function runLivePrintInvoiceEngine(packet) {
+        document.getElementById('pChallanNo').innerText = packet.chNo;
+        document.getElementById('pChallanDate').innerText = formatCustomDate(packet.date);
+        document.getElementById('pLrNo').innerText = packet.lr || "N/A";
+        document.getElementById('pTransport').innerText = packet.transport;
+        document.getElementById('pDealerName').innerText = packet.dealer;
+        document.getElementById('pDealerTown').innerText = packet.town || "N/A";
+
+        const pBody = document.getElementById('pTableBody'); pBody.innerHTML = "";
+        let tQty = 0; let tVal = 0;
+
+        packet.items.forEach(i => {
+            tQty += i.qty; tVal += parseFloat(i.taxable);
+            pBody.innerHTML += `<tr><td class="text-center">${i.sr}</td><td>${i.serial}</td><td>${i.code}</td><td>${i.desc}</td><td class="text-center">${i.qty}</td><td class="text-right">${parseFloat(i.rate).toFixed(2)}</td><td class="text-right">${parseFloat(i.taxable).toFixed(2)}</td><td>${i.complaint}</td></tr>`;
+        });
+
+        const grossRounded = Math.round(tVal);
+        document.getElementById('pTotalQty').innerText = tQty;
+        document.getElementById('pTotalValue').innerText = "₹" + grossRounded.toFixed(2);
+        document.getElementById('pAmountWords').innerText = "Amount In Words: Rupees " + convertToWordsIndian(grossRounded) + " Only";
+
+        document.getElementById('invoice-preview').style.display = "block";
+        setTimeout(() => {
+            window.print();
+            document.getElementById('invoice-preview').style.display = "none";
+        }, 350);
+    }
+
+    function validateAndSaveBill() {
+        const dealerName = document.getElementById('dealerTargetName').value;
+        const dealerTown = document.getElementById('dealerTargetTown').value;
+        const chNo = document.getElementById('challanNo').value;
+        const date = document.getElementById('challanDate').value;
+        const transport = document.getElementById('transportDetails').value;
+        const lr = document.getElementById('lrNo').value;
+
+        if (!dealerName || window.activeStockRows.length === 0) {
+            alert("Error: Active row empty or dealer verification required!");
+            return;
+        }
+
+        const packet = { chNo, date, dealer: dealerName, town: dealerTown, transport, lr, items: window.activeStockRows };
+        
+        window.savedDatabaseLogs = window.savedDatabaseLogs.filter(l => l.chNo !== chNo);
+        window.savedDatabaseLogs.push(packet);
+        localStorage.setItem('hwk_challan_logs', JSON.stringify(window.savedDatabaseLogs));
+
+        exportSingleChallanExcel(packet);
+        runLivePrintInvoiceEngine(packet);
+        
+        if(!isNaN(chNo)) { document.getElementById('challanNo').value = parseInt(chNo) + 1; }
+
+        window.activeStockRows = [];
+        renderGridTable();
+        renderHistoryLogs();
+        document.getElementById('searchDealer').value = "";
+        document.getElementById('dealerTargetName').value = "";
+        document.getElementById('dealerTargetTown').value = "";
+    }
+
+    function renderHistoryLogs() {
+        const body = document.getElementById('historyLogBody'); body.innerHTML = "";
+        if(window.savedDatabaseLogs.length === 0) {
+            body.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#999;">No saved local history entries found in this session.</td></tr>`;
+            return;
+        }
+        window.savedDatabaseLogs.forEach(l => {
+            body.innerHTML += `<tr><td><b>${l.chNo}</b></td><td>${formatCustomDate(l.date)}</td><td>${l.dealer}</td><td>${l.items.length} Items</td><td><button class="btn" style="padding:3px 8px; font-size:12px; background:#1e7e34;" onclick="reloadPrintFromLog('${l.chNo}')">Print PDF</button></td></tr>`;
+        });
+    }
+
+    window.reloadPrintFromLog = function(chNo) {
+        const log = window.savedDatabaseLogs.find(l => l.chNo === chNo);
+        if(log) runLivePrintInvoiceEngine(log);
+    };
+
+    function convertToWordsIndian(num) {
+        if (num === 0) return 'Zero';
+        const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        function g(n) { if (n < 20) return a[n]; let s = b[Math.floor(n / 10)]; if (n % 10 > 0) s += ' ' + a[n % 10]; return s; }
+        function c(n, v, r) { if (n === 0) return ''; return g(n) + ' ' + v + (r ? ' ' + r : ''); }
+        let out = ''; let numStr = num.toString().padStart(9, '0');
+        let crores = parseInt(numStr.substring(0, 2)); let lakhs = parseInt(numStr.substring(2, 4));
+        let thousands = parseInt(numStr.substring(4, 6)); let hundreds = parseInt(numStr.substring(6, 7));
+        let tensUnits = parseInt(numStr.substring(7, 9));
+        if (crores > 0) out += c(crores, 'Crore', out); if (lakhs > 0) out += (out ? ' ' : '') + c(lakhs, 'Lakh', out);
+        if (thousands > 0) out += (out ? ' ' : '') + c(thousands, 'Thousand', out); if (hundreds > 0) out += (out ? ' ' : '') + c(hundreds, 'Hundred', out);
+        if (tensUnits > 0) out += (out ? ' ' : '') + g(tensUnits);
+        return out.trim();
+    }
+
+    function exportMasterReportToExcel() {
+        const rawLogs = localStorage.getItem('hwk_challan_logs');
+        const logs = rawLogs ? JSON.parse(rawLogs) : [];
+        if (logs.length === 0) { alert("Export Error: No records found!"); return; }
+        const matrix = [["HAWKINS COOKERS LIMITED - MASTER RECONCILIATION REPORT"], [], ["Challan No", "Date", "Dealer Name", "Town", "Transport Details", "LR No", "Sr", "Serial Number", "Product Code", "Description", "Qty", "Base MRP", "Taxable Value (70%)", "Complaint No"]];
+        let totalQtyAll = 0, totalTaxAll = 0;
+        logs.forEach(packet => { packet.items.forEach(item => { const qty = parseInt(item.qty) || 0; const taxable = parseFloat(item.taxable) || 0; totalQtyAll += qty; totalTaxAll += taxable; matrix.push([packet.chNo, formatCustomDate(packet.date), packet.dealer, packet.town || "N/A", packet.transport, packet.lr || "N/A", item.sr, item.serial || "N/A", item.code, item.desc, qty, parseFloat(item.rate).toFixed(2), taxable.toFixed(2), item.complaint || "N/A"]); }); });
+        matrix.push(["", "", "", "", "", "", "", "", "", "", "", "", "", ""]);
+        matrix.push(["GRAND TOTAL", "", "", "", "", "", "", "", "", "", totalQtyAll, "", Math.round(totalTaxAll).toFixed(2), ""]);
+        const ws = XLSX.utils.aoa_to_sheet(matrix); const wb = XLSX.utils.book_new();
+        ws['!cols'] = [{wch:12},{wch:14},{wch:30},{wch:15},{wch:35},{wch:12},{wch:6},{wch:15},{wch:12},{wch:25},{wch:8},{wch:12},{wch:16},{wch:15}];
+        XLSX.utils.book_append_sheet(wb, ws, "Master Reconciliation"); XLSX.writeFile(wb, `Hawkins_Master_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+</script>
+</body>
+</html>
