@@ -437,25 +437,28 @@
         localStorage.setItem('hwk_drive_client_id', inputId);
         customClientId = inputId;
         initGoogleLibraryProtocols(customClientId);
-        alert("Google Drive Configuration Updated! You can now click on 'Link Drive Account'.");
+        alert("Google Drive Configuration Updated! Click 'Link Drive Account' to login.");
     }
 
     function initGoogleLibraryProtocols(clientId) {
         try {
             gapi.load('client', () => {
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: clientId,
-                    scope: SCOPES,
-                    callback: (tokenResponse) => {
-                        if (tokenResponse.error !== undefined) { throw (tokenResponse); }
-                        accessToken = tokenResponse.access_token;
-                        document.getElementById('driveStatus').innerText = "✅ Cloud Linked!";
-                        document.getElementById('driveStatus').style.color = "green";
-                    },
+                gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest').then(() => {
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: clientId,
+                        scope: SCOPES,
+                        callback: (tokenResponse) => {
+                            if (tokenResponse.error !== undefined) { throw (tokenResponse); }
+                            accessToken = tokenResponse.access_token;
+                            gapi.client.setToken({ access_token: accessToken });
+                            document.getElementById('driveStatus').innerText = "✅ Cloud Linked!";
+                            document.getElementById('driveStatus').style.color = "green";
+                        },
+                    });
+                    document.getElementById('connectDriveBtn').disabled = false;
+                    document.getElementById('driveStatus').innerText = "Ready to Link";
+                    document.getElementById('driveStatus').style.color = "orange";
                 });
-                document.getElementById('connectDriveBtn').disabled = false;
-                document.getElementById('driveStatus').innerText = "Ready to Link";
-                document.getElementById('driveStatus').style.color = "orange";
             });
         } catch(err) {
             console.error("Initialization Failed. Verify Client ID.", err);
@@ -518,7 +521,7 @@
             document.getElementById('dealerTargetTown').value = match.town;
         }
     }
-    
+
     function handleProductSelection(e) {
         const match = window.systemProducts.find(p => p.code === e.target.value);
         document.getElementById('itemDescription').value = match ? match.desc : "";
@@ -557,10 +560,9 @@
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
 
-    // FIXED: Google Drive Upload logic ko complete aur operational kiya gaya
     function uploadToGoogleDrive(workbook, filename) {
         if (!accessToken) {
-            console.log("Drive not connected, skipping cloud upload.");
+            alert("⚠️ Cloud Account Not Authenticated. Saved Locally Only!");
             return;
         }
         try {
@@ -574,21 +576,43 @@
             const blob = new Blob([s2ab(wbout)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
             const metadata = { 'name': filename, 'mimeType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
-            const formData = new FormData();
-            formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            formData.append('file', blob);
+            
+            var boundary = '-------314159265358979323846';
+            var delimiter = "\r\n--" + boundary + "\r\n";
+            var close_delim = "\r\n--" + boundary + "--";
 
-            fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: new Headers({ 'Authorization': 'Bearer ' + accessToken }),
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log("Successfully saved to Google Drive:", data);
-                alert("File successfully saved to Google Drive!");
-            })
-            .catch(err => console.error("Drive upload failed:", err));
+            var reader = new FileReader();
+            reader.readAsBinaryString(blob);
+            reader.onload = function (e) {
+                var contentType = blob.type || 'application/octet-stream';
+                var metadataPart = JSON.stringify(metadata);
+
+                var multipartRequestBody =
+                    delimiter +
+                    'Content-Type: application/json\r\n\r\n' +
+                    metadataPart +
+                    delimiter +
+                    'Content-Type: ' + contentType + '\r\n' +
+                    'Content-Transfer-Encoding: base64\r\n\r\n' +
+                    btoa(reader.result) +
+                    close_delim;
+
+                var request = gapi.client.request({
+                    'path': '/upload/drive/v3/files',
+                    'method': 'POST',
+                    'params': {'uploadType': 'multipart'},
+                    'headers': { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
+                    'body': multipartRequestBody
+                });
+
+                request.execute(function (file) {
+                    if (file && file.id) {
+                        alert("🚀 Success! File Google Drive par save ho gayi: " + filename);
+                    } else {
+                        alert("❌ Drive Upload Fail: " + (file.error ? file.error.message : "Unknown Error"));
+                    }
+                });
+            };
         } catch(e) {
             console.error("Error creating blob for drive:", e);
         }
@@ -618,8 +642,9 @@
         return wb;
     }
 
-    // FIXED: Save function ko local storage update karne aur drive integration trigger karne ke liye optimize kiya gaya
-    function validateAndSaveBill() {
+    function validateAndSaveBill(event) {
+        if(event) event.preventDefault();
+
         const chNo = document.getElementById('challanNo').value.trim();
         const date = document.getElementById('challanDate').value;
         const dName = document.getElementById('dealerTargetName').value;
@@ -652,7 +677,6 @@
 
         const logPacket = { chNo, date, dealer: dName, town: dTown, transport, lr, totalItems: totQty, totalAmt: Math.round(totVal), items: [...window.activeStockRows] };
         
-        // Asli Local Storage Sync Connection Hook
         const existingIdx = window.savedDatabaseLogs.findIndex(l => l.chNo === chNo);
         if(existingIdx >= 0) window.savedDatabaseLogs[existingIdx] = logPacket;
         else window.savedDatabaseLogs.push(logPacket);
@@ -660,16 +684,13 @@
         localStorage.setItem('hwk_challan_logs', JSON.stringify(window.savedDatabaseLogs));
         renderHistoryLogs();
         
-        // FIXED: Excel file workbook generate karke Google Drive par auto-save karna
         const wb = buildChallanWorkbook(logPacket);
         if (accessToken) { 
             uploadToGoogleDrive(wb, `Challan_${chNo}_${dName.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`); 
         }
 
-        // Window print popup trigger
-        window.print();
-        
-        // Form Auto Reset Logic (preventing browser loop loss)
+        setTimeout(() => { window.print(); }, 800);
+
         const nextNum = parseInt(chNo) + 1;
         if(!isNaN(nextNum)) document.getElementById('challanNo').value = nextNum;
         window.activeStockRows = [];
