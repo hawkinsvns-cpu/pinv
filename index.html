@@ -3,18 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Hawkins Damage Stock Pro System</title>
+<title>Hawkins Damage Stock Pro System v2</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-
 :root{
     --primary:#a83232;
     --bg:#f5f5f5;
     --white:#ffffff;
     --border:#dcdcdc;
+    --success: #1f7a1f;
 }
 
 *{
@@ -49,6 +48,37 @@ h1{
     color:var(--primary);
     font-size:20px;
     font-weight:bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.upload-box {
+    background: #fff3f3;
+    border: 1px dashed var(--primary);
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.upload-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.upload-group label {
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.status-badge {
+    font-size: 12px;
+    font-weight: normal;
+    color: green;
 }
 
 .form-grid{
@@ -60,6 +90,7 @@ h1{
 .form-group{
     display:flex;
     flex-direction:column;
+    position: relative;
 }
 
 label{
@@ -68,11 +99,35 @@ label{
     font-weight:bold;
 }
 
-input,select{
+input, select{
     padding:10px;
     border:1px solid var(--border);
     border-radius:5px;
-    background-color: #fff;
+}
+
+/* Auto-complete suggestions styling */
+.suggestions-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 1px solid var(--border);
+    border-top: none;
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    list-style: none;
+}
+
+.suggestions-list li {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.suggestions-list li:hover {
+    background-color: #f0f0f0;
 }
 
 button{
@@ -110,8 +165,7 @@ table th{
     background:#f0f0f0;
 }
 
-table th,
-table td{
+table th, table td{
     border:1px solid #ddd;
     padding:10px;
     font-size:14px;
@@ -121,7 +175,7 @@ table td{
 .print-btn{
     width:100%;
     margin-top:25px;
-    background:#1f7a1f;
+    background:var(--success);
 }
 
 .history-table{
@@ -136,22 +190,10 @@ table td{
 }
 
 @media print{
-
-    body{
-        background:#fff;
-        padding:0;
-    }
-
-    .container{
-        display:none;
-    }
-
-    #invoice-preview{
-        display:block;
-    }
-
+    body{ background:#fff; padding:0; }
+    .container{ display:none; }
+    #invoice-preview{ display:block; }
 }
-
 </style>
 </head>
 <body>
@@ -160,290 +202,282 @@ table td{
 
 <h1>📦 Hawkins Damage Stock Pro System</h1>
 
+<div class="section-title">📂 Upload Master Lists (Excel File)</div>
+<div class="upload-box">
+    <div class="upload-group">
+        <label>Upload Dealer List Excel <span id="dealerStatus" class="status-badge">❌ Not Loaded</span></label>
+        <input type="file" id="dealerExcelFile" accept=".xlsx, .xls" onchange="uploadDealers(this)">
+    </div>
+    <div class="upload-group">
+        <label>Upload Product List Excel <span id="prodStatus" class="status-badge">❌ Not Loaded</span></label>
+        <input type="file" id="productExcelFile" accept=".xlsx, .xls" onchange="uploadProducts(this)">
+    </div>
+</div>
+
 <div class="section-title">Dealer & Challan Details</div>
-
 <div class="form-grid">
-
-<div class="form-group">
-<label>Challan No</label>
-<input type="text" id="challanNo" value="260001">
-</div>
-
-<div class="form-group">
-<label>Date</label>
-<input type="date" id="challanDate">
-</div>
-
-<div class="form-group">
-<label>Select Dealer List</label>
-<select id="dealerSelect" onchange="handleDealerSelect()">
-    <option value="">-- Choose Dealer --</option>
-    <option value='{"name":"Rajesh Enterprises","town":"Delhi"}'>Rajesh Enterprises (Delhi)</option>
-    <option value='{"name":"Verma Kitchen Collection","town":"Mumbai"}'>Verma Kitchen Collection (Mumbai)</option>
-    <option value='{"name":"Gupta Agency","town":"Jaipur"}'>Gupta Agency (Jaipur)</option>
-</select>
-</div>
-
-<div class="form-group">
-<label>Dealer Name (Manual/Auto)</label>
-<input type="text" id="dealerName" placeholder="Dealer Name">
-</div>
-
-<div class="form-group">
-<label>Town / City</label>
-<input type="text" id="dealerTown" placeholder="Town">
-</div>
-
-<div class="form-group">
-<label>Transport</label>
-<input type="text" id="transportDetails" value="Vikas Transport">
-</div>
-
-<div class="form-group">
-<label>LR No</label>
-<input type="text" id="lrNo" value="N/A">
-</div>
-
+    <div class="form-group">
+        <label>Challan No</label>
+        <input type="text" id="challanNo" value="260001">
+    </div>
+    <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="challanDate">
+    </div>
+    <div class="form-group">
+        <label>Dealer Name (Type to search)</label>
+        <input type="text" id="dealerName" placeholder="Start typing dealer name..." autocomplete="off" oninput="searchDealers(this.value)">
+        <ul id="dealerSuggestions" class="suggestions-list"></ul>
+    </div>
+    <div class="form-group">
+        <label>Town / City</label>
+        <input type="text" id="dealerTown" placeholder="Town" readonly>
+    </div>
+    <div class="form-group">
+        <label>Transport</label>
+        <input type="text" id="transportDetails" value="Vikas Transport">
+    </div>
+    <div class="form-group">
+        <label>LR No</label>
+        <input type="text" id="lrNo" value="N/A">
+    </div>
 </div>
 
 <div class="section-title">Add Product</div>
-
 <div class="form-grid">
-
-<div class="form-group">
-<label>Select Product List</label>
-<select id="productSelect" onchange="handleProductSelect()">
-    <option value="">-- Choose Product --</option>
-    <option value='{"code":"HC30","desc":"Hawkins Classic 3.0 Litre","mrp":1450}'>HC30 - Hawkins Classic 3.0L</option>
-    <option value='{"code":"H05","desc":"Hawkins Hebron 5.0 Litre","mrp":2100}'>H05 - Hawkins Hebron 5.0L</option>
-    <option value='{"code":"CB20","desc":"Contura Black 2.0 Litre","mrp":1650}'>CB20 - Contura Black 2.0L</option>
-    <option value='{"code":"F40","desc":"Hawkins Futura 4.0 Litre","mrp":3200}'>F40 - Hawkins Futura 4.0L</option>
-</select>
-</div>
-
-<div class="form-group">
-<label>Product Code</label>
-<input type="text" id="productCode">
-</div>
-
-<div class="form-group">
-<label>Description</label>
-<input type="text" id="productDesc">
-</div>
-
-<div class="form-group">
-<label>Serial Number</label>
-<input type="text" id="serialNo">
-</div>
-
-<div class="form-group">
-<label>Qty</label>
-<input type="number" id="qty" value="1">
-</div>
-
-<div class="form-group">
-<label>MRP</label>
-<input type="number" id="mrp">
-</div>
-
-<div class="form-group">
-<label>Complaint No</label>
-<input type="text" id="complaintNo">
-</div>
-
+    <div class="form-group">
+        <label>Product Code (Type to search)</label>
+        <input type="text" id="productCode" placeholder="Type code..." autocomplete="off" oninput="searchProducts(this.value)">
+        <ul id="productSuggestions" class="suggestions-list"></ul>
+    </div>
+    <div class="form-group">
+        <label>Description</label>
+        <input type="text" id="productDesc" placeholder="Product Description" readonly>
+    </div>
+    <div class="form-group">
+        <label>Serial Number</label>
+        <input type="text" id="serialNo">
+    </div>
+    <div class="form-group">
+        <label>Qty</label>
+        <input type="number" id="qty" value="1">
+    </div>
+    <div class="form-group">
+        <label>MRP</label>
+        <input type="number" id="mrp" placeholder="MRP" readonly>
+    </div>
+    <div class="form-group">
+        <label>Complaint No</label>
+        <input type="text" id="complaintNo">
+    </div>
 </div>
 
 <div class="action-row">
-<button onclick="addItem()">+ Add Item</button>
-<button onclick="exportMasterExcel()">📊 Export Master Excel</button>
+    <button onclick="addItem()">+ Add Item</button>
+    <button onclick="exportMasterExcel()">📊 Export Master Excel</button>
 </div>
 
 <div class="table-responsive">
-
-<table>
-
-<thead>
-<tr>
-<th>Sr</th>
-<th>Serial</th>
-<th>Code</th>
-<th>Description</th>
-<th>Qty</th>
-<th>MRP</th>
-<th>Taxable</th>
-<th>Complaint</th>
-<th>Action</th>
-</tr>
-</thead>
-
-<tbody id="itemsBody"></tbody>
-
-</table>
-
+    <table>
+        <thead>
+            <tr>
+                <th>Sr</th>
+                <th>Serial</th>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>MRP</th>
+                <th>Taxable</th>
+                <th>Complaint</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="itemsBody"></tbody>
+    </table>
 </div>
 
-<button class="print-btn" onclick="saveAndPrint()">
-💾 Save & Print Invoice
-</button>
+<button class="print-btn" onclick="saveAndPrint()">💾 Save & Print Invoice</button>
 
 <div class="section-title">Saved Local Records</div>
-
 <div class="table-responsive history-table">
-
-<table>
-
-<thead>
-<tr>
-<th>Challan</th>
-<th>Date</th>
-<th>Dealer</th>
-<th>Amount</th>
-</tr>
-</thead>
-
-<tbody id="historyBody"></tbody>
-
-</table>
-
+    <table>
+        <thead>
+            <tr>
+                <th>Challan</th>
+                <th>Date</th>
+                <th>Dealer</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+    </table>
 </div>
 
 </div>
 
 <div id="invoice-preview">
-
-<h2 style="text-align:center;">HAWKINS COOKERS LIMITED</h2>
-
-<hr>
-
-<p>
-<b>Challan No:</b> <span id="pChallan"></span>
-</p>
-
-<p>
-<b>Date:</b> <span id="pDate"></span>
-</p>
-
-<p>
-<b>Dealer:</b> <span id="pDealer"></span>
-</p>
-
-<p>
-<b>Town:</b> <span id="pTown"></span>
-</p>
-
-<p>
-<b>Transport:</b> <span id="pTransport"></span>
-</p>
-
-<p>
-<b>LR No:</b> <span id="pLr"></span>
-</p>
-
-<br>
-
-<table style="width:100%;border-collapse:collapse;" border="1">
-
-<thead>
-<tr>
-<th>Sr</th>
-<th>Serial</th>
-<th>Code</th>
-<th>Description</th>
-<th>Qty</th>
-<th>MRP</th>
-<th>Taxable</th>
-</tr>
-</thead>
-
-<tbody id="printTable"></tbody>
-
-</table>
-
-<br>
-
-<h3>
-Total Taxable Value:
-₹<span id="pTotal"></span>
-</h3>
-
-<br><br>
-
-<div style="text-align:center;font-weight:bold;">
-No Commercial Value - Not For Sale
-</div>
-
+    <h2 style="text-align:center;">HAWKINS COOKERS LIMITED</h2>
+    <hr>
+    <p><b>Challan No:</b> <span id="pChallan"></span></p>
+    <p><b>Date:</b> <span id="pDate"></span></p>
+    <p><b>Dealer:</b> <span id="pDealer"></span></p>
+    <p><b>Town:</b> <span id="pTown"></span></p>
+    <p><b>Transport:</b> <span id="pTransport"></span></p>
+    <p><b>LR No:</b> <span id="pLr"></span></p>
+    <br>
+    <table style="width:100%;border-collapse:collapse;" border="1">
+        <thead>
+            <tr>
+                <th>Sr</th>
+                <th>Serial</th>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Qty</th>
+                <th>MRP</th>
+                <th>Taxable</th>
+            </tr>
+        </thead>
+        <tbody id="printTable"></tbody>
+    </table>
+    <br>
+    <h3>Total Taxable Value: ₹<span id="pTotal"></span></h3>
+    <br><br>
+    <div style="text-align:center;font-weight:bold;">No Commercial Value - Not For Sale</div>
 </div>
 
 <script>
-
-document.getElementById("challanDate").value =
-new Date().toISOString().split('T')[0];
+// Initial Settings
+document.getElementById("challanDate").value = new Date().toISOString().split('T')[0];
 
 let items = [];
+let masterDealers = JSON.parse(localStorage.getItem("hwk_master_dealers")) || [];
+let masterProducts = JSON.parse(localStorage.getItem("hwk_master_products")) || [];
+let savedLogs = JSON.parse(localStorage.getItem("hwk_logs")) || [];
 
-let savedLogs =
-JSON.parse(localStorage.getItem("hwk_logs")) || [];
-
+// Status Updates on Load
+updateStatusBadges();
 renderHistory();
 
-// Dealer Change Handler
-function handleDealerSelect() {
-    const select = document.getElementById("dealerSelect");
-    if(!select.value) return;
-    
-    const dealerData = JSON.parse(select.value);
-    document.getElementById("dealerName").value = dealerData.name;
-    document.getElementById("dealerTown").value = dealerData.town;
+function updateStatusBadges() {
+    if(masterDealers.length > 0) {
+        document.getElementById("dealerStatus").innerHTML = `✅ ${masterDealers.length} Dealers Saved`;
+    }
+    if(masterProducts.length > 0) {
+        document.getElementById("prodStatus").innerHTML = `✅ ${masterProducts.length} Products Saved`;
+    }
 }
 
-// Product Change Handler
-function handleProductSelect() {
-    const select = document.getElementById("productSelect");
-    if(!select.value) return;
-    
-    const prodData = JSON.parse(select.value);
-    document.getElementById("productCode").value = prodData.code;
-    document.getElementById("productDesc").value = prodData.desc;
-    document.getElementById("mrp").value = prodData.mrp;
+// 1. EXCEL UPLOAD LOGIC
+function uploadDealers(input) {
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        const firstSheet = workbook.SheetNames[0];
+        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+        
+        // standard format convert (Dealer Name, Town)
+        masterDealers = jsonData.map(row => ({
+            name: row["Dealer Name"] || row["name"] || Object.values(row)[0],
+            town: row["Town"] || row["town"] || row["City"] || Object.values(row)[1] || ""
+        }));
+        
+        localStorage.setItem("hwk_master_dealers", JSON.stringify(masterDealers));
+        updateStatusBadges();
+        alert("Dealers List Uploaded & Saved Locally Successfully!");
+    };
+    reader.readAsArrayBuffer(file);
 }
 
+function uploadProducts(input) {
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        const firstSheet = workbook.SheetNames[0];
+        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+        
+        // standard format convert (Product Code, Description, MRP)
+        masterProducts = jsonData.map(row => ({
+            code: String(row["Product Code"] || row["code"] || Object.values(row)[0]),
+            desc: row["Description"] || row["desc"] || Object.values(row)[1] || "",
+            mrp: parseFloat(row["MRP"] || row["mrp"] || Object.values(row)[2] || 0)
+        }));
+        
+        localStorage.setItem("hwk_master_products", JSON.stringify(masterProducts));
+        updateStatusBadges();
+        alert("Products List Uploaded & Saved Locally Successfully!");
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// 2. AUTO-COMPLETE SEARCH LOGIC
+function searchDealers(value) {
+    const list = document.getElementById("dealerSuggestions");
+    list.innerHTML = "";
+    if(!value) return;
+
+    const filtered = masterDealers.filter(d => d.name.toLowerCase().includes(value.toLowerCase())).slice(0, 10);
+    
+    filtered.forEach(d => {
+        const li = document.createElement("li");
+        li.innerText = `${d.name} (${d.town})`;
+        li.onclick = function() {
+            document.getElementById("dealerName").value = d.name;
+            document.getElementById("dealerTown").value = d.town;
+            list.innerHTML = "";
+        };
+        list.appendChild(li);
+    });
+}
+
+function searchProducts(value) {
+    const list = document.getElementById("productSuggestions");
+    list.innerHTML = "";
+    if(!value) return;
+
+    const filtered = masterProducts.filter(p => p.code.toLowerCase().includes(value.toLowerCase())).slice(0, 10);
+    
+    filtered.forEach(p => {
+        const li = document.createElement("li");
+        li.innerText = `${p.code} - ${p.desc}`;
+        li.onclick = function() {
+            document.getElementById("productCode").value = p.code;
+            document.getElementById("productDesc").value = p.desc;
+            document.getElementById("mrp").value = p.mrp;
+            list.innerHTML = "";
+        };
+        list.appendChild(li);
+    });
+}
+
+// Hide auto-complete on clicking outside
+document.addEventListener("click", function(e) {
+    if(e.target.id !== "dealerName") document.getElementById("dealerSuggestions").innerHTML = "";
+    if(e.target.id !== "productCode") document.getElementById("productSuggestions").innerHTML = "";
+});
+
+
+// 3. CORE FUNCTIONS (ADD, DELETE, PRINT, EXCEL)
 function addItem(){
-
-    const code =
-    document.getElementById("productCode").value;
-
-    const desc =
-    document.getElementById("productDesc").value;
-
-    const serial =
-    document.getElementById("serialNo").value;
-
-    const qty =
-    parseInt(document.getElementById("qty").value);
-
-    const mrp =
-    parseFloat(document.getElementById("mrp").value);
-
-    const complaint =
-    document.getElementById("complaintNo").value;
+    const code = document.getElementById("productCode").value;
+    const desc = document.getElementById("productDesc").value;
+    const serial = document.getElementById("serialNo").value;
+    const qty = parseInt(document.getElementById("qty").value);
+    const mrp = parseFloat(document.getElementById("mrp").value);
+    const complaint = document.getElementById("complaintNo").value;
 
     if(!code || !desc){
-        alert("Enter product details");
+        alert("Enter or select product details");
         return;
     }
 
-    const taxable =
-    (mrp * 0.70) * qty;
+    const taxable = (mrp * 0.70) * qty;
 
     items.push({
-        sr:items.length + 1,
-        code,
-        desc,
-        serial,
-        qty,
-        mrp,
-        taxable,
-        complaint
+        sr: items.length + 1, code, desc, serial, qty, mrp, taxable, complaint
     });
 
     renderTable();
@@ -454,19 +488,12 @@ function addItem(){
     document.getElementById("qty").value = 1;
     document.getElementById("mrp").value = "";
     document.getElementById("complaintNo").value = "";
-    document.getElementById("productSelect").value = ""; // Reset Dropdown
-
 }
 
 function renderTable(){
-
-    const body =
-    document.getElementById("itemsBody");
-
+    const body = document.getElementById("itemsBody");
     body.innerHTML = "";
-
-    items.forEach((item,index)=>{
-
+    items.forEach((item, index)=>{
         body.innerHTML += `
         <tr>
             <td>${item.sr}</td>
@@ -477,45 +504,23 @@ function renderTable(){
             <td>₹${item.mrp}</td>
             <td>₹${item.taxable.toFixed(2)}</td>
             <td>${item.complaint}</td>
-            <td>
-                <button onclick="deleteItem(${index})">
-                Delete
-                </button>
-            </td>
-        </tr>
-        `;
-
+            <td><button onclick="deleteItem(${index})">Delete</button></td>
+        </tr>`;
     });
-
 }
 
 function deleteItem(index){
-
     items.splice(index,1);
-
     renderTable();
-
 }
 
 function saveAndPrint(){
-
-    const challan =
-    document.getElementById("challanNo").value;
-
-    const date =
-    document.getElementById("challanDate").value;
-
-    const dealer =
-    document.getElementById("dealerName").value;
-
-    const town =
-    document.getElementById("dealerTown").value;
-
-    const transport =
-    document.getElementById("transportDetails").value;
-
-    const lr =
-    document.getElementById("lrNo").value;
+    const challan = document.getElementById("challanNo").value;
+    const date = document.getElementById("challanDate").value;
+    const dealer = document.getElementById("dealerName").value;
+    const town = document.getElementById("dealerTown").value;
+    const transport = document.getElementById("transportDetails").value;
+    const lr = document.getElementById("lrNo").value;
 
     if(items.length === 0){
         alert("Add items first");
@@ -523,16 +528,11 @@ function saveAndPrint(){
     }
 
     let total = 0;
-
-    const ptable =
-    document.getElementById("printTable");
-
+    const ptable = document.getElementById("printTable");
     ptable.innerHTML = "";
 
     items.forEach(item=>{
-
         total += item.taxable;
-
         ptable.innerHTML += `
         <tr>
             <td>${item.sr}</td>
@@ -542,9 +542,7 @@ function saveAndPrint(){
             <td>${item.qty}</td>
             <td>${item.mrp}</td>
             <td>${item.taxable.toFixed(2)}</td>
-        </tr>
-        `;
-
+        </tr>`;
     });
 
     document.getElementById("pChallan").innerText = challan;
@@ -553,48 +551,24 @@ function saveAndPrint(){
     document.getElementById("pTown").innerText = town;
     document.getElementById("pTransport").innerText = transport;
     document.getElementById("pLr").innerText = lr;
-    document.getElementById("pTotal").innerText =
-    total.toFixed(2);
+    document.getElementById("pTotal").innerText = total.toFixed(2);
 
-    const log = {
-        challan,
-        date,
-        dealer,
-        town,
-        transport,
-        lr,
-        total,
-        items: JSON.parse(JSON.stringify(items)) // Deep copy
-    };
-
+    const log = { challan, date, dealer, town, transport, lr, total, items: JSON.parse(JSON.stringify(items)) };
     savedLogs.push(log);
-
-    localStorage.setItem(
-        "hwk_logs",
-        JSON.stringify(savedLogs)
-    );
+    localStorage.setItem("hwk_logs", JSON.stringify(savedLogs));
 
     renderHistory();
-
     createExcel(log);
 
-    setTimeout(()=>{
-        window.print();
-    },500);
+    setTimeout(()=>{ window.print(); },500);
 
-    document.getElementById("challanNo").value =
-    parseInt(challan) + 1;
-
+    document.getElementById("challanNo").value = parseInt(challan) + 1;
     items = [];
-
     renderTable();
-    document.getElementById("dealerSelect").value = ""; // Reset Dealer Dropdown
-
 }
 
-// Exact Invoice Layout Excel Export Function
+// EXACT PRINT INVOICE COPY IN EXCEL
 function createExcel(log){
-
     const data = [
         ["HAWKINS COOKERS LIMITED"],
         ["--------------------------------------------------"],
@@ -609,15 +583,7 @@ function createExcel(log){
     ];
 
     log.items.forEach(i=>{
-        data.push([
-            i.sr,
-            i.serial,
-            i.code,
-            i.desc,
-            i.qty,
-            i.mrp,
-            parseFloat(i.taxable.toFixed(2))
-        ]);
+        data.push([i.sr, i.serial, i.code, i.desc, i.qty, i.mrp, parseFloat(i.taxable.toFixed(2))]);
     });
 
     data.push([]);
@@ -627,78 +593,35 @@ function createExcel(log){
 
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
-
     XLSX.utils.book_append_sheet(wb, ws, "Invoice Copy");
     XLSX.writeFile(wb, `Challan_${log.challan}.xlsx`);
 }
 
 function renderHistory(){
-
-    const body =
-    document.getElementById("historyBody");
-
+    const body = document.getElementById("historyBody");
     body.innerHTML = "";
-
     savedLogs.forEach(log=>{
-
         body.innerHTML += `
         <tr>
             <td>${log.challan}</td>
             <td>${log.date}</td>
             <td>${log.dealer}</td>
             <td>₹${parseFloat(log.total).toFixed(2)}</td>
-        </tr>
-        `;
-
+        </tr>`;
     });
-
 }
 
 function exportMasterExcel(){
-
-    if(savedLogs.length === 0){
-        alert("No records");
-        return;
-    }
-
-    const data = [
-        [
-            "Challan",
-            "Date",
-            "Dealer",
-            "Amount"
-        ]
-    ];
-
+    if(savedLogs.length === 0){ alert("No records"); return; }
+    const data = [["Challan", "Date", "Dealer", "Amount"]];
     savedLogs.forEach(log=>{
-        data.push([
-            log.challan,
-            log.date,
-            log.dealer,
-            parseFloat(log.total).toFixed(2)
-        ]);
+        data.push([log.challan, log.date, log.dealer, parseFloat(log.total).toFixed(2)]);
     });
-
-    const ws =
-    XLSX.utils.aoa_to_sheet(data);
-
-    const wb =
-    XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(
-        wb,
-        ws,
-        "Master"
-    );
-
-    XLSX.writeFile(
-        wb,
-        "Master_Report.xlsx"
-    );
-
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Master");
+    XLSX.writeFile(wb, "Master_Report.xlsx");
 }
-
 </script>
-
 </body>
 </html>
