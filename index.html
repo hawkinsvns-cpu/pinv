@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hawkins Damage Stock Pro System v2</title>
+<title>Hawkins Damage Stock Pro System v3</title>
 
+<!-- SheetJS Library -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
@@ -105,7 +106,7 @@ input, select{
     border-radius:5px;
 }
 
-/* Auto-complete suggestions styling */
+/* Smart Auto-complete suggestions list style */
 .suggestions-list {
     position: absolute;
     top: 100%;
@@ -115,19 +116,24 @@ input, select{
     border: 1px solid var(--border);
     border-top: none;
     z-index: 100;
-    max-height: 200px;
+    max-height: 220px;
     overflow-y: auto;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     list-style: none;
+    border-radius: 0 0 5px 5px;
 }
 
 .suggestions-list li {
-    padding: 10px;
+    padding: 10px 12px;
     cursor: pointer;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 13px;
 }
 
 .suggestions-list li:hover {
     background-color: #f0f0f0;
+    color: var(--primary);
+    font-weight: bold;
 }
 
 button{
@@ -202,18 +208,20 @@ table th, table td{
 
 <h1>📦 Hawkins Damage Stock Pro System</h1>
 
-<div class="section-title">📂 Upload Master Lists (Excel File)</div>
+<!-- MASTER FILES EXCEL UPLOAD SECTION -->
+<div class="section-title">📂 Upload Master Lists (Excel Files)</div>
 <div class="upload-box">
     <div class="upload-group">
-        <label>Upload Dealer List Excel <span id="dealerStatus" class="status-badge">❌ Not Loaded</span></label>
+        <label>Upload Dealer Master Excel <span id="dealerStatus" class="status-badge">❌ Not Loaded</span></label>
         <input type="file" id="dealerExcelFile" accept=".xlsx, .xls" onchange="uploadDealers(this)">
     </div>
     <div class="upload-group">
-        <label>Upload Product List Excel <span id="prodStatus" class="status-badge">❌ Not Loaded</span></label>
+        <label>Upload Product Master Excel <span id="prodStatus" class="status-badge">❌ Not Loaded</span></label>
         <input type="file" id="productExcelFile" accept=".xlsx, .xls" onchange="uploadProducts(this)">
     </div>
 </div>
 
+<!-- INVOICE HEADERS -->
 <div class="section-title">Dealer & Challan Details</div>
 <div class="form-grid">
     <div class="form-group">
@@ -225,9 +233,13 @@ table th, table td{
         <input type="date" id="challanDate">
     </div>
     <div class="form-group">
-        <label>Dealer Name (Type to search)</label>
-        <input type="text" id="dealerName" placeholder="Start typing dealer name..." autocomplete="off" oninput="searchDealers(this.value)">
+        <label>Search Dealer (Type Code or Name)</label>
+        <input type="text" id="dealerSearchInput" placeholder="Type Dealer Code or Name..." autocomplete="off" oninput="searchDealers(this.value)">
         <ul id="dealerSuggestions" class="suggestions-list"></ul>
+    </div>
+    <div class="form-group" style="display:none;">
+        <input type="text" id="dealerCode">
+        <input type="text" id="dealerName">
     </div>
     <div class="form-group">
         <label>Town / City</label>
@@ -243,16 +255,17 @@ table th, table td{
     </div>
 </div>
 
+<!-- PRODUCT ENTRY -->
 <div class="section-title">Add Product</div>
 <div class="form-grid">
     <div class="form-group">
-        <label>Product Code (Type to search)</label>
-        <input type="text" id="productCode" placeholder="Type code..." autocomplete="off" oninput="searchProducts(this.value)">
+        <label>Search Product (Type Code or Name)</label>
+        <input type="text" id="productSearchInput" placeholder="Type Product Code or Name..." autocomplete="off" oninput="searchProducts(this.value)">
         <ul id="productSuggestions" class="suggestions-list"></ul>
     </div>
-    <div class="form-group">
-        <label>Description</label>
-        <input type="text" id="productDesc" placeholder="Product Description" readonly>
+    <div class="form-group" style="display:none;">
+        <input type="text" id="productCode">
+        <input type="text" id="productDesc">
     </div>
     <div class="form-group">
         <label>Serial Number</label>
@@ -277,6 +290,7 @@ table th, table td{
     <button onclick="exportMasterExcel()">📊 Export Master Excel</button>
 </div>
 
+<!-- ENTRY TABLE -->
 <div class="table-responsive">
     <table>
         <thead>
@@ -298,7 +312,8 @@ table th, table td{
 
 <button class="print-btn" onclick="saveAndPrint()">💾 Save & Print Invoice</button>
 
-<div class="section-title">Saved Local Records</div>
+<!-- SAVED HISTORY -->
+<div class="section-title">Saved Local Records (Permanent)</div>
 <div class="table-responsive history-table">
     <table>
         <thead>
@@ -315,6 +330,7 @@ table th, table td{
 
 </div>
 
+<!-- PRINT WINDOW VIEW -->
 <div id="invoice-preview">
     <h2 style="text-align:center;">HAWKINS COOKERS LIMITED</h2>
     <hr>
@@ -346,7 +362,7 @@ table th, table td{
 </div>
 
 <script>
-// Initial Settings
+// Load default configurations
 document.getElementById("challanDate").value = new Date().toISOString().split('T')[0];
 
 let items = [];
@@ -354,20 +370,19 @@ let masterDealers = JSON.parse(localStorage.getItem("hwk_master_dealers")) || []
 let masterProducts = JSON.parse(localStorage.getItem("hwk_master_products")) || [];
 let savedLogs = JSON.parse(localStorage.getItem("hwk_logs")) || [];
 
-// Status Updates on Load
 updateStatusBadges();
 renderHistory();
 
 function updateStatusBadges() {
     if(masterDealers.length > 0) {
-        document.getElementById("dealerStatus").innerHTML = `✅ ${masterDealers.length} Dealers Saved`;
+        document.getElementById("dealerStatus").innerHTML = `✅ ${masterDealers.length} Dealers Loaded`;
     }
     if(masterProducts.length > 0) {
-        document.getElementById("prodStatus").innerHTML = `✅ ${masterProducts.length} Products Saved`;
+        document.getElementById("prodStatus").innerHTML = `✅ ${masterProducts.length} Products Loaded`;
     }
 }
 
-// 1. EXCEL UPLOAD LOGIC
+// 1. DUAL MASTER EXCEL UPLOAD AND LOCAL STORAGE SAVE LOGIC
 function uploadDealers(input) {
     const file = input.files[0];
     const reader = new FileReader();
@@ -377,15 +392,15 @@ function uploadDealers(input) {
         const firstSheet = workbook.SheetNames[0];
         const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
         
-        // standard format convert (Dealer Name, Town)
         masterDealers = jsonData.map(row => ({
-            name: row["Dealer Name"] || row["name"] || Object.values(row)[0],
-            town: row["Town"] || row["town"] || row["City"] || Object.values(row)[1] || ""
+            code: String(row["Dealer Code"] || row["code"] || row["Dealer ID"] || ""),
+            name: String(row["Dealer Name"] || row["name"] || Object.values(row)[0] || ""),
+            town: String(row["Town"] || row["town"] || row["City"] || Object.values(row)[1] || "")
         }));
         
         localStorage.setItem("hwk_master_dealers", JSON.stringify(masterDealers));
         updateStatusBadges();
-        alert("Dealers List Uploaded & Saved Locally Successfully!");
+        alert("Dealer List Saved Permanently!");
     };
     reader.readAsArrayBuffer(file);
 }
@@ -399,32 +414,36 @@ function uploadProducts(input) {
         const firstSheet = workbook.SheetNames[0];
         const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
         
-        // standard format convert (Product Code, Description, MRP)
         masterProducts = jsonData.map(row => ({
-            code: String(row["Product Code"] || row["code"] || Object.values(row)[0]),
-            desc: row["Description"] || row["desc"] || Object.values(row)[1] || "",
+            code: String(row["Product Code"] || row["code"] || Object.values(row)[0] || ""),
+            desc: String(row["Description"] || row["desc"] || row["Product Name"] || Object.values(row)[1] || ""),
             mrp: parseFloat(row["MRP"] || row["mrp"] || Object.values(row)[2] || 0)
         }));
         
         localStorage.setItem("hwk_master_products", JSON.stringify(masterProducts));
         updateStatusBadges();
-        alert("Products List Uploaded & Saved Locally Successfully!");
+        alert("Product List Saved Permanently!");
     };
     reader.readAsArrayBuffer(file);
 }
 
-// 2. AUTO-COMPLETE SEARCH LOGIC
+// 2. SEARCH BY BOTH CODE & NAME LOGIC
 function searchDealers(value) {
     const list = document.getElementById("dealerSuggestions");
     list.innerHTML = "";
     if(!value) return;
 
-    const filtered = masterDealers.filter(d => d.name.toLowerCase().includes(value.toLowerCase())).slice(0, 10);
+    const filtered = masterDealers.filter(d => 
+        d.name.toLowerCase().includes(value.toLowerCase()) || 
+        d.code.toLowerCase().includes(value.toLowerCase())
+    ).slice(0, 15);
     
     filtered.forEach(d => {
         const li = document.createElement("li");
-        li.innerText = `${d.name} (${d.town})`;
+        li.innerText = d.code ? `[${d.code}] - ${d.name} (${d.town})` : `${d.name} (${d.town})`;
         li.onclick = function() {
+            document.getElementById("dealerSearchInput").value = d.code ? `${d.code} - ${d.name}` : d.name;
+            document.getElementById("dealerCode").value = d.code;
             document.getElementById("dealerName").value = d.name;
             document.getElementById("dealerTown").value = d.town;
             list.innerHTML = "";
@@ -438,12 +457,16 @@ function searchProducts(value) {
     list.innerHTML = "";
     if(!value) return;
 
-    const filtered = masterProducts.filter(p => p.code.toLowerCase().includes(value.toLowerCase())).slice(0, 10);
+    const filtered = masterProducts.filter(p => 
+        p.code.toLowerCase().includes(value.toLowerCase()) || 
+        p.desc.toLowerCase().includes(value.toLowerCase())
+    ).slice(0, 15);
     
     filtered.forEach(p => {
         const li = document.createElement("li");
-        li.innerText = `${p.code} - ${p.desc}`;
+        li.innerText = `${p.code} | ${p.desc} (MRP: ₹${p.mrp})`;
         li.onclick = function() {
+            document.getElementById("productSearchInput").value = `${p.code} - ${p.desc}`;
             document.getElementById("productCode").value = p.code;
             document.getElementById("productDesc").value = p.desc;
             document.getElementById("mrp").value = p.mrp;
@@ -453,14 +476,13 @@ function searchProducts(value) {
     });
 }
 
-// Hide auto-complete on clicking outside
+// Close suggestion box on outside click
 document.addEventListener("click", function(e) {
-    if(e.target.id !== "dealerName") document.getElementById("dealerSuggestions").innerHTML = "";
-    if(e.target.id !== "productCode") document.getElementById("productSuggestions").innerHTML = "";
+    if(e.target.id !== "dealerSearchInput") document.getElementById("dealerSuggestions").innerHTML = "";
+    if(e.target.id !== "productSearchInput") document.getElementById("productSuggestions").innerHTML = "";
 });
 
-
-// 3. CORE FUNCTIONS (ADD, DELETE, PRINT, EXCEL)
+// 3. LOGIC CONTROLLERS
 function addItem(){
     const code = document.getElementById("productCode").value;
     const desc = document.getElementById("productDesc").value;
@@ -470,7 +492,7 @@ function addItem(){
     const complaint = document.getElementById("complaintNo").value;
 
     if(!code || !desc){
-        alert("Enter or select product details");
+        alert("Pehle product search karke select karein!");
         return;
     }
 
@@ -482,6 +504,7 @@ function addItem(){
 
     renderTable();
 
+    document.getElementById("productSearchInput").value = "";
     document.getElementById("productCode").value = "";
     document.getElementById("productDesc").value = "";
     document.getElementById("serialNo").value = "";
@@ -517,13 +540,13 @@ function deleteItem(index){
 function saveAndPrint(){
     const challan = document.getElementById("challanNo").value;
     const date = document.getElementById("challanDate").value;
-    const dealer = document.getElementById("dealerName").value;
+    const dealer = document.getElementById("dealerName").value || document.getElementById("dealerSearchInput").value;
     const town = document.getElementById("dealerTown").value;
     const transport = document.getElementById("transportDetails").value;
     const lr = document.getElementById("lrNo").value;
 
     if(items.length === 0){
-        alert("Add items first");
+        alert("List me item add karein!");
         return;
     }
 
@@ -560,30 +583,38 @@ function saveAndPrint(){
     renderHistory();
     createExcel(log);
 
-    setTimeout(()=>{ window.print(); },500);
+    setTimeout(()=>{ window.print(); }, 500);
 
     document.getElementById("challanNo").value = parseInt(challan) + 1;
     items = [];
     renderTable();
+    document.getElementById("dealerSearchInput").value = "";
+    document.getElementById("dealerTown").value = "";
 }
 
-// EXACT PRINT INVOICE COPY IN EXCEL
+// PI260038.xls SYSTEM SPECIFIC FORMAT EXCISE EXPORT
 function createExcel(log){
     const data = [
         ["HAWKINS COOKERS LIMITED"],
-        ["--------------------------------------------------"],
-        ["Challan No:", log.challan],
-        ["Date:", log.date],
-        ["Dealer:", log.dealer],
-        ["Town:", log.town],
-        ["Transport:", log.transport],
-        ["LR No:", log.lr],
+        ["C & FA : NORTHERN GOODS CARRIERS"],
+        ["HARIHARPUR, ROHANIYA DLW ROAD (Near Omkar Upwan)"],
+        ["VARANASI - 221108"],
         [],
-        ["Sr", "Serial", "Code", "Description", "Qty", "MRP", "Taxable Value"]
+        ["DELIVERY CHALLAN"],
+        [],
+        ["Delivery Challan No:", log.challan, "", "", "Date:", log.date],
+        ["LR NO:", log.lr, "", "", "TPT:", log.transport],
+        [],
+        ["To,", log.dealer],
+        ["Town:", log.town],
+        [],
+        ["Please receive the following Unsalable Cookers/cookwares:"],
+        [],
+        ["Sr", "Number/Serial", "Code", "Product Name", "Qty", "MRP", "Taxable Value", "Compl. No"]
     ];
 
     log.items.forEach(i=>{
-        data.push([i.sr, i.serial, i.code, i.desc, i.qty, i.mrp, parseFloat(i.taxable.toFixed(2))]);
+        data.push([i.sr, i.serial, i.code, i.desc, i.qty, i.mrp, parseFloat(i.taxable.toFixed(2)), i.complaint]);
     });
 
     data.push([]);
@@ -593,7 +624,7 @@ function createExcel(log){
 
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Invoice Copy");
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
     XLSX.writeFile(wb, `Challan_${log.challan}.xlsx`);
 }
 
@@ -612,7 +643,7 @@ function renderHistory(){
 }
 
 function exportMasterExcel(){
-    if(savedLogs.length === 0){ alert("No records"); return; }
+    if(savedLogs.length === 0){ alert("No records found!"); return; }
     const data = [["Challan", "Date", "Dealer", "Amount"]];
     savedLogs.forEach(log=>{
         data.push([log.challan, log.date, log.dealer, parseFloat(log.total).toFixed(2)]);
