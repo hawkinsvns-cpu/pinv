@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawkins Damage Stock Pro System (v14.0 - Permanent Local)</title>
-    <!-- SheetJS for Excel Workflows -->
+    <title>Hawkins Damage Stock Pro System (v14.1 - Permanent Local)</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
@@ -113,8 +112,9 @@
         .text-right { text-align: right; } .text-center { text-align: center; }
         .legal-footer { margin-top: 8px; font-size: 9.5px; border-left: 3px solid #000; padding-left: 6px; font-style: italic; line-height: 1.2; }
         
-        .middle-warning-zone { text-align: center; margin: 25px 0 10px 0; width: 100%; }
-        .commercial-warning-text { font-size: 15px; font-weight: bold; font-style: italic; letter-spacing: 1px; text-transform: uppercase; display: inline-block; border: 1px double #000; padding: 4px 15px; }
+        /* New Footer Placed Warning Badge Styling */
+        .footer-warning-zone { text-align: center; margin-top: 15px; margin-bottom: 5px; width: 100%; }
+        .commercial-warning-text { font-size: 13px; font-weight: bold; font-style: italic; letter-spacing: 1px; text-transform: uppercase; display: inline-block; padding: 2px 10px; border: 1px dashed #000; }
 
         .sign-row { display: flex; justify-content: flex-end; margin-top: 15px; font-size: 11px; }
         .sig-box { width: 220px; border-top: 1px solid #000; text-align: center; padding-top: 4px; font-weight: bold; }
@@ -135,9 +135,8 @@
 <body>
 
 <div class="container">
-    <div class="header-title"><span>📦</span> Hawkins Damage Stock Pro System (v14.0)</div>
+    <div class="header-title"><span>📦</span> Hawkins Damage Stock Pro System (v14.1)</div>
 
-    <!-- Excel Hooks -->
     <div class="excel-section">
         <div class="excel-box">
             <label>1. Connect Dealer Excel File (`dealer list1.xlsx`):</label>
@@ -149,13 +148,11 @@
         </div>
     </div>
 
-    <!-- Live Trackers -->
     <div class="banner-container">
         <div id="productBanner" class="status-banner banner-warning">⚠️ Default System Products Loaded: 4 Items Active</div>
         <div id="dealerBanner" class="status-banner banner-warning">⚠️ Default Core Dealers Loaded: 3 Dealers Active</div>
     </div>
 
-    <!-- Metadata Panel -->
     <div class="section-heading"><span>📋</span> Document Identity & Dealer Selection</div>
     <div class="form-grid">
         <div class="form-group">
@@ -194,7 +191,6 @@
         </div>
     </div>
 
-    <!-- Active Row Builder -->
     <div class="section-heading"><span>🛒</span> Active Stock Entry Row</div>
     <div class="action-row">
         <div class="form-grid" style="grid-template-columns: 2fr 2fr 2fr 1fr 1fr;">
@@ -226,7 +222,6 @@
         </div>
     </div>
 
-    <!-- Grid Layout Table -->
     <div class="table-responsive">
         <table id="itemsTable">
             <thead>
@@ -246,10 +241,8 @@
         </table>
     </div>
 
-    <!-- Action Execution Hooks -->
     <button type="button" class="btn btn-success" id="saveBillBtn">💾 Save & Print Professional Bill</button>
 
-    <!-- Local Sessions History Log -->
     <div class="section-heading"><span>📜</span> Browser Saved Local Records (Permanent)</div>
     <div class="table-responsive">
         <table>
@@ -269,7 +262,6 @@
     </div>
 </div>
 
-<!-- ================= BRANDED PRINT LAYOUT (1-PAGE FIXED) ================= -->
 <div id="invoice-preview">
     <div class="dc-top-badge">Delivery Challan</div>
     <table class="brand-header-table">
@@ -338,17 +330,15 @@
     <div id="pAmountWords" style="margin-top:8px; font-size:10.5px; font-weight:bold;"></div>
     <div class="legal-footer">We certify that these goods are manufacturing defects/damaged stock items being returned to factories. They are unsalable and hold zero commercial values.</div>
 
-    <!-- Dynamic Warning Badge Centered -->
-    <div class="middle-warning-zone">
-        <div class="commercial-warning-text">No Commercial Value - Not For Sale</div>
-    </div>
-
     <div class="sign-row">
         <div class="sig-box">For HAWKINS COOKERS LIMITED<br><br><br>Authorized Signatory</div>
     </div>
 
-    <!-- ABSOLUTE FOOTER -->
     <div class="mumbai-absolute-footer">
+        <div class="footer-warning-zone">
+            <div class="commercial-warning-text">No Commercial Value - Not For Sale</div>
+        </div>
+        
         <table class="mumbai-footer-table">
             <tr>
                 <td style="width: 50%;">
@@ -487,7 +477,6 @@
         return `${parts[2]}-${parts[1]}-${parts[0]}`;
     }
 
-    // Exact Auto-Excel File Trigger
     function exportSingleChallanExcel(packet) {
         const matrix = [
             ["HAWKINS COOKERS LIMITED - DELIVERY CHALLAN REPORT"], [ ],
@@ -560,10 +549,7 @@
         window.savedDatabaseLogs.push(packet);
         localStorage.setItem('hwk_challan_logs', JSON.stringify(window.savedDatabaseLogs));
 
-        // 1st: Excel save down locally
         exportSingleChallanExcel(packet);
-        
-        // 2nd: Trigger PDF print dialog immediately
         runLivePrintInvoiceEngine(packet);
         
         if(!isNaN(chNo)) { document.getElementById('challanNo').value = parseInt(chNo) + 1; }
