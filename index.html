@@ -6,7 +6,6 @@
 
 <title>Hawkins Damage Stock Pro System</title>
 
-<!-- SheetJS -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
@@ -73,6 +72,7 @@ input,select{
     padding:10px;
     border:1px solid var(--border);
     border-radius:5px;
+    background-color: #fff;
 }
 
 button{
@@ -175,7 +175,17 @@ table td{
 </div>
 
 <div class="form-group">
-<label>Dealer Name</label>
+<label>Select Dealer List</label>
+<select id="dealerSelect" onchange="handleDealerSelect()">
+    <option value="">-- Choose Dealer --</option>
+    <option value='{"name":"Rajesh Enterprises","town":"Delhi"}'>Rajesh Enterprises (Delhi)</option>
+    <option value='{"name":"Verma Kitchen Collection","town":"Mumbai"}'>Verma Kitchen Collection (Mumbai)</option>
+    <option value='{"name":"Gupta Agency","town":"Jaipur"}'>Gupta Agency (Jaipur)</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Dealer Name (Manual/Auto)</label>
 <input type="text" id="dealerName" placeholder="Dealer Name">
 </div>
 
@@ -199,6 +209,17 @@ table td{
 <div class="section-title">Add Product</div>
 
 <div class="form-grid">
+
+<div class="form-group">
+<label>Select Product List</label>
+<select id="productSelect" onchange="handleProductSelect()">
+    <option value="">-- Choose Product --</option>
+    <option value='{"code":"HC30","desc":"Hawkins Classic 3.0 Litre","mrp":1450}'>HC30 - Hawkins Classic 3.0L</option>
+    <option value='{"code":"H05","desc":"Hawkins Hebron 5.0 Litre","mrp":2100}'>H05 - Hawkins Hebron 5.0L</option>
+    <option value='{"code":"CB20","desc":"Contura Black 2.0 Litre","mrp":1650}'>CB20 - Contura Black 2.0L</option>
+    <option value='{"code":"F40","desc":"Hawkins Futura 4.0 Litre","mrp":3200}'>F40 - Hawkins Futura 4.0L</option>
+</select>
+</div>
 
 <div class="form-group">
 <label>Product Code</label>
@@ -288,8 +309,6 @@ table td{
 
 </div>
 
-<!-- PRINT LAYOUT -->
-
 <div id="invoice-preview">
 
 <h2 style="text-align:center;">HAWKINS COOKERS LIMITED</h2>
@@ -367,6 +386,27 @@ JSON.parse(localStorage.getItem("hwk_logs")) || [];
 
 renderHistory();
 
+// Dealer Change Handler
+function handleDealerSelect() {
+    const select = document.getElementById("dealerSelect");
+    if(!select.value) return;
+    
+    const dealerData = JSON.parse(select.value);
+    document.getElementById("dealerName").value = dealerData.name;
+    document.getElementById("dealerTown").value = dealerData.town;
+}
+
+// Product Change Handler
+function handleProductSelect() {
+    const select = document.getElementById("productSelect");
+    if(!select.value) return;
+    
+    const prodData = JSON.parse(select.value);
+    document.getElementById("productCode").value = prodData.code;
+    document.getElementById("productDesc").value = prodData.desc;
+    document.getElementById("mrp").value = prodData.mrp;
+}
+
 function addItem(){
 
     const code =
@@ -414,6 +454,7 @@ function addItem(){
     document.getElementById("qty").value = 1;
     document.getElementById("mrp").value = "";
     document.getElementById("complaintNo").value = "";
+    document.getElementById("productSelect").value = ""; // Reset Dropdown
 
 }
 
@@ -519,8 +560,11 @@ function saveAndPrint(){
         challan,
         date,
         dealer,
+        town,
+        transport,
+        lr,
         total,
-        items
+        items: JSON.parse(JSON.stringify(items)) // Deep copy
     };
 
     savedLogs.push(log);
@@ -544,31 +588,27 @@ function saveAndPrint(){
     items = [];
 
     renderTable();
+    document.getElementById("dealerSelect").value = ""; // Reset Dealer Dropdown
 
 }
 
+// Exact Invoice Layout Excel Export Function
 function createExcel(log){
 
     const data = [
-
-        ["HAWKINS DELIVERY CHALLAN"],
-
+        ["HAWKINS COOKERS LIMITED"],
+        ["--------------------------------------------------"],
+        ["Challan No:", log.challan],
+        ["Date:", log.date],
+        ["Dealer:", log.dealer],
+        ["Town:", log.town],
+        ["Transport:", log.transport],
+        ["LR No:", log.lr],
         [],
-
-        ["Challan No",log.challan],
-
-        ["Date",log.date],
-
-        ["Dealer",log.dealer],
-
-        [],
-
-        ["Sr","Serial","Code","Description","Qty","MRP","Taxable"]
-
+        ["Sr", "Serial", "Code", "Description", "Qty", "MRP", "Taxable Value"]
     ];
 
     log.items.forEach(i=>{
-
         data.push([
             i.sr,
             i.serial,
@@ -576,28 +616,20 @@ function createExcel(log){
             i.desc,
             i.qty,
             i.mrp,
-            i.taxable
+            parseFloat(i.taxable.toFixed(2))
         ]);
-
     });
 
-    const ws =
-    XLSX.utils.aoa_to_sheet(data);
+    data.push([]);
+    data.push(["Total Taxable Value:", "", "", "", "", "", parseFloat(log.total.toFixed(2))]);
+    data.push([]);
+    data.push(["No Commercial Value - Not For Sale"]);
 
-    const wb =
-    XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
 
-    XLSX.utils.book_append_sheet(
-        wb,
-        ws,
-        "Invoice"
-    );
-
-    XLSX.writeFile(
-        wb,
-        `Challan_${log.challan}.xlsx`
-    );
-
+    XLSX.utils.book_append_sheet(wb, ws, "Invoice Copy");
+    XLSX.writeFile(wb, `Challan_${log.challan}.xlsx`);
 }
 
 function renderHistory(){
@@ -614,7 +646,7 @@ function renderHistory(){
             <td>${log.challan}</td>
             <td>${log.date}</td>
             <td>${log.dealer}</td>
-            <td>₹${log.total}</td>
+            <td>₹${parseFloat(log.total).toFixed(2)}</td>
         </tr>
         `;
 
@@ -630,25 +662,21 @@ function exportMasterExcel(){
     }
 
     const data = [
-
         [
             "Challan",
             "Date",
             "Dealer",
             "Amount"
         ]
-
     ];
 
     savedLogs.forEach(log=>{
-
         data.push([
             log.challan,
             log.date,
             log.dealer,
-            log.total
+            parseFloat(log.total).toFixed(2)
         ]);
-
     });
 
     const ws =
